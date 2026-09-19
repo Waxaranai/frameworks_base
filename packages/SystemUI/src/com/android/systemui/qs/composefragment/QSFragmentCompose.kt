@@ -144,7 +144,6 @@ import com.android.systemui.qs.footer.ui.compose.FooterActions
 import com.android.systemui.qs.panels.shared.model.QSFragmentComposeClippingTableLog
 import com.android.systemui.qs.panels.ui.compose.EditMode
 import com.android.systemui.qs.panels.ui.compose.QuickActionsGrid
-import com.android.systemui.qs.panels.ui.compose.QuickQuickSettings
 import com.android.systemui.qs.panels.ui.compose.TileGrid
 import com.android.systemui.qs.shared.ui.QuickSettings.Elements
 import com.android.systemui.qs.ui.composable.QuickSettingsShade
@@ -726,13 +725,6 @@ constructor(
                             }
                         }
                         .let { state -> { state.value } }
-                val Tiles =
-                    @Composable {
-                        QuickQuickSettings(
-                            viewModel = viewModel.quickQuickSettingsViewModel,
-                            listening = isListening,
-                        )
-                    }
                 val Media =
                     @Composable {
                         if (viewModel.qqsMediaVisible) {
@@ -777,7 +769,7 @@ constructor(
                                     listening = isListening,
                                 )
                             },
-                            tiles = Tiles,
+                            tiles = {},
                             media = Media,
                             mediaInRow = viewModel.qqsMediaInRow,
                         )
