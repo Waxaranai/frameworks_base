@@ -16,17 +16,13 @@
 
 package com.android.systemui.qs.panels.domain.interactor
 
-import com.android.internal.logging.UiEventLogger
 import com.android.systemui.dagger.SysUISingleton
 import com.android.systemui.dagger.qualifiers.Background
 import com.android.systemui.log.LogBuffer
 import com.android.systemui.log.core.LogLevel
-import com.android.systemui.qs.QSEditEvent
 import com.android.systemui.qs.panels.data.repository.DefaultLargeTilesRepository
 import com.android.systemui.qs.panels.shared.model.PanelsLog
-import com.android.systemui.qs.pipeline.domain.interactor.CurrentTilesInteractor
 import com.android.systemui.qs.pipeline.shared.TileSpec
-import com.android.systemui.qs.pipeline.shared.metricSpec
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
@@ -39,9 +35,7 @@ class IconTilesInteractor
 @Inject
 constructor(
     private val repo: DefaultLargeTilesRepository,
-    private val currentTilesInteractor: CurrentTilesInteractor,
     private val preferencesInteractor: QSPreferencesInteractor,
-    private val uiEventLogger: UiEventLogger,
     @PanelsLog private val logBuffer: LogBuffer,
     @Background private val scope: CoroutineScope,
 ) {
@@ -73,30 +67,8 @@ constructor(
     }
 
     fun resize(spec: TileSpec, toIcon: Boolean) {
-        if (!isCurrent(spec)) {
-            return
-        }
-
-        val isIcon = !largeTilesSpecs.value.contains(spec)
-        if (toIcon && !isIcon) {
-            preferencesInteractor.setLargeTilesSpecs(largeTilesSpecs.value - spec)
-            uiEventLogger.log(
-                /* event= */ QSEditEvent.QS_EDIT_RESIZE_SMALL,
-                /* uid= */ 0,
-                /* packageName= */ spec.metricSpec,
-            )
-        } else if (!toIcon && isIcon) {
-            preferencesInteractor.setLargeTilesSpecs(largeTilesSpecs.value + spec)
-            uiEventLogger.log(
-                /* event= */ QSEditEvent.QS_EDIT_RESIZE_LARGE,
-                /* uid= */ 0,
-                /* packageName= */ spec.metricSpec,
-            )
-        }
-    }
-
-    private fun isCurrent(spec: TileSpec): Boolean {
-        return currentTilesInteractor.currentTilesSpecs.contains(spec)
+        // Resizing is disabled in the Edith QS style: every tile is fixed at 1x1, so there is no
+        // large/small distinction to switch between.
     }
 
     private fun logChange(specs: Set<TileSpec>) {

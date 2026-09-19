@@ -999,6 +999,9 @@ private fun LazyGridItemScope.TileGridCell(
     InteractiveTileContainer(
         tileState = tileState,
         resizingState = resizingState,
+        // Resizing is only meaningful when there are large (span > 1) tiles. In the Edith QS style
+        // every tile is 1x1 (largeTilesSpan == 1), so the resizing handle is hidden.
+        resizable = largeTilesSpan > 1,
         modifier =
             modifier
                 .height(TileHeight)
@@ -1057,13 +1060,18 @@ private fun LazyGridItemScope.TileGridCell(
                                 }
                             )
                         } else {
-                            // Don't allow for resizing during placement mode
-                            actions.add(
-                                CustomAccessibilityAction(toggleSizeLabel) {
-                                    onResize(FinalResizeOperation(cell.tile.tileSpec, !cell.isIcon))
-                                    true
-                                }
-                            )
+                            // Don't allow for resizing during placement mode, or when there are no
+                            // large tiles (every tile is fixed 1x1).
+                            if (largeTilesSpan > 1) {
+                                actions.add(
+                                    CustomAccessibilityAction(toggleSizeLabel) {
+                                        onResize(
+                                            FinalResizeOperation(cell.tile.tileSpec, !cell.isIcon)
+                                        )
+                                        true
+                                    }
+                                )
+                            }
                             actions.add(
                                 CustomAccessibilityAction(toggleSelectionLabel) {
                                     selectionState.toggleSelection(cell.tile.tileSpec)
@@ -1085,13 +1093,36 @@ private fun LazyGridItemScope.TileGridCell(
                     alpha = { containerAlpha },
                     color = { colors.background },
                 )
-                .keyboardShortcuts(cell.tile.tileSpec, selectionState) {
+                .keyboardShortcuts(
+                    cell.tile.tileSpec,
+                    selectionState,
+                    resizable = largeTilesSpan > 1,
+                ) {
                     onResize(FinalResizeOperation(cell.tile.tileSpec, !cell.isIcon))
                 }
                 .thenIf(isSelectable) { selectableModifier }
         ) {
-            EditTile(tile = cell.tile, state = resizingState, progress = resizingState::progress)
+            if (largeTilesSpan > 1) {
+                EditTile(tile = cell.tile, state = resizingState, progress = resizingState::progress)
+            } else {
+                // Edith QS style: every tile is a fixed 1x1 icon tile, so render it compactly
+                // instead of using the resizable large-tile layout.
+                CompactEditTile(tile = cell.tile, colors = colors)
+            }
         }
+    }
+}
+
+/** A compact, fixed 1x1 icon-only tile used in edit mode when tiles are not resizable. */
+@Composable
+private fun CompactEditTile(tile: EditTileViewModel, colors: TileColors) {
+    // The tile background is drawn by the parent container; only draw the centered icon here.
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        SmallTileContent(
+            iconProvider = { tile.icon },
+            color = colors.icon,
+            modifier = Modifier.clearAndSetSemantics {},
+        )
     }
 }
 
@@ -1370,6 +1401,7 @@ private fun Modifier.tileBackground(
 private fun Modifier.keyboardShortcuts(
     tileSpec: TileSpec,
     selectionState: MutableSelectionState,
+    resizable: Boolean = true,
     onResize: () -> Unit,
 ): Modifier {
     return focusable().onKeyEvent {
@@ -1386,8 +1418,12 @@ private fun Modifier.keyboardShortcuts(
                     true
                 }
                 Key.R -> { // Resize
-                    onResize()
-                    true
+                    if (resizable) {
+                        onResize()
+                        true
+                    } else {
+                        false
+                    }
                 }
                 else -> false
             }

@@ -112,15 +112,7 @@ class EditTileListState(
 
     /** Resize the tile corresponding to the [TileSpec] to [toIcon] */
     fun resizeTile(tileSpec: TileSpec, toIcon: Boolean) {
-        val fromIndex = indexOf(tileSpec)
-        if (fromIndex != INVALID_INDEX) {
-            val cell = _tiles[fromIndex] as TileGridCell
-
-            if (cell.isIcon == toIcon) return
-
-            _tiles[fromIndex] = cell.copy(width = if (toIcon) 1 else largeTilesSpan)
-            regenerateGrid(fromIndex)
-        }
+        // Resizing is disabled in the Edith QS style: every tile is fixed at 1x1.
     }
 
     override fun isMoving(tileSpec: TileSpec): Boolean {
@@ -227,20 +219,6 @@ class EditTileListState(
     private fun regenerateGrid() {
         _tiles.filterIsInstance<TileGridCell>().toGridCells(columns).let {
             _tiles.clear()
-            _tiles.addAll(it)
-        }
-    }
-
-    /**
-     * Regenerate the list of [GridCell] with their new potential rows from [fromIndex], leaving
-     * cells before that untouched.
-     */
-    private fun regenerateGrid(fromIndex: Int) {
-        val fromRow = _tiles[fromIndex].row
-        val (pre, post) = _tiles.partition { it.row < fromRow }
-        post.filterIsInstance<TileGridCell>().toGridCells(columns, startingRow = fromRow).let {
-            _tiles.clear()
-            _tiles.addAll(pre)
             _tiles.addAll(it)
         }
     }
