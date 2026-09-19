@@ -61,6 +61,7 @@ import com.android.systemui.qs.footer.ui.viewmodel.FooterActionsViewModel
 import com.android.systemui.qs.panels.domain.interactor.TileSquishinessInteractor
 import com.android.systemui.qs.panels.ui.viewmodel.InFirstPageViewModel
 import com.android.systemui.qs.panels.ui.viewmodel.MediaInRowInLandscapeViewModel
+import com.android.systemui.qs.panels.ui.viewmodel.QuickActionsGridViewModel
 import com.android.systemui.qs.panels.ui.viewmodel.QuickQuickSettingsViewModel
 import com.android.systemui.qs.ui.viewmodel.QuickSettingsContainerViewModel
 import com.android.systemui.res.R
@@ -98,6 +99,7 @@ constructor(
     containerViewModelFactory: QuickSettingsContainerViewModel.Factory,
     @ShadeDisplayAware private val resources: Resources,
     quickQuickSettingsViewModelFactory: QuickQuickSettingsViewModel.Factory,
+    val quickActionsGridViewModel: QuickActionsGridViewModel,
     footerActionsViewModelFactory: FooterActionsViewModel.Factory,
     private val footerActionsController: FooterActionsController,
     private val sysuiStatusBarStateController: SysuiStatusBarStateController,

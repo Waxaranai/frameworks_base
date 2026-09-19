@@ -143,6 +143,7 @@ import com.android.systemui.qs.composefragment.viewmodel.QSFragmentComposeViewMo
 import com.android.systemui.qs.footer.ui.compose.FooterActions
 import com.android.systemui.qs.panels.shared.model.QSFragmentComposeClippingTableLog
 import com.android.systemui.qs.panels.ui.compose.EditMode
+import com.android.systemui.qs.panels.ui.compose.QuickActionsGrid
 import com.android.systemui.qs.panels.ui.compose.QuickQuickSettings
 import com.android.systemui.qs.panels.ui.compose.TileGrid
 import com.android.systemui.qs.shared.ui.QuickSettings.Elements
@@ -769,6 +770,13 @@ constructor(
                                 .padding(horizontal = qsHorizontalMargin())
                     ) {
                         QuickQuickSettingsLayout(
+                            quickActions = {
+                                QuickActionsGrid(
+                                    viewModel = viewModel.quickActionsGridViewModel,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    listening = isListening,
+                                )
+                            },
                             tiles = Tiles,
                             media = Media,
                             mediaInRow = viewModel.qqsMediaInRow,
@@ -918,6 +926,13 @@ constructor(
                                     )
                         ) {
                             QuickSettingsLayout(
+                                quickActions = {
+                                    QuickActionsGrid(
+                                        viewModel = viewModel.quickActionsGridViewModel,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        listening = isListening,
+                                    )
+                                },
                                 brightness =
                                     if (viewModel.isBrightnessSliderVisible) {
                                         { BrightnessSlider() }
@@ -1068,7 +1083,8 @@ object SceneKeys {
         object : ElementMatcher {
             override fun matches(key: ElementKey, content: ContentKey): Boolean {
                 return content == SceneKeys.QuickQuickSettings &&
-                    Elements.TileElementMatcher.matches(key, content)
+                    (Elements.TileElementMatcher.matches(key, content) ||
+                        Elements.QuickActionsElementMatcher.matches(key, content))
             }
         }
 }
@@ -1420,6 +1436,7 @@ private fun ContentScope.MediaObject(
 @Composable
 @VisibleForTesting
 fun QuickQuickSettingsLayout(
+    quickActions: @Composable () -> Unit,
     tiles: @Composable () -> Unit,
     media: @Composable () -> Unit,
     mediaInRow: Boolean,
@@ -1429,11 +1446,19 @@ fun QuickQuickSettingsLayout(
             horizontalArrangement = spacedBy(QuickSettingsShade.Dimensions.HorizontalPadding),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Box(modifier = Modifier.weight(1f)) { tiles() }
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement =
+                    spacedBy(dimensionResource(R.dimen.qs_tile_margin_vertical)),
+            ) {
+                quickActions()
+                tiles()
+            }
             Box(modifier = Modifier.weight(1f)) { media() }
         }
     } else {
         Column(verticalArrangement = spacedBy(dimensionResource(R.dimen.qs_tile_margin_vertical))) {
+            quickActions()
             tiles()
             media()
         }
@@ -1444,6 +1469,7 @@ fun QuickQuickSettingsLayout(
 @Composable
 @VisibleForTesting
 fun QuickSettingsLayout(
+    quickActions: @Composable () -> Unit,
     brightness: @Composable () -> Unit,
     tiles: @Composable () -> Unit,
     media: @Composable () -> Unit,
@@ -1454,6 +1480,7 @@ fun QuickSettingsLayout(
             verticalArrangement = spacedBy(QuickSettingsShade.Dimensions.VerticalPadding),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            quickActions()
             brightness()
             Row(
                 horizontalArrangement = spacedBy(QuickSettingsShade.Dimensions.HorizontalPadding),
@@ -1468,6 +1495,7 @@ fun QuickSettingsLayout(
             verticalArrangement = spacedBy(QuickSettingsShade.Dimensions.VerticalPadding),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            quickActions()
             brightness()
             tiles()
             media()
