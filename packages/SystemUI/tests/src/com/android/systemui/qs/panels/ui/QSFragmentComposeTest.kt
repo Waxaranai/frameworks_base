@@ -97,6 +97,7 @@ class QSFragmentComposeTest : SysuiTestCase() {
             QuickSettingsLayout(
                 quickActions = {},
                 brightness = { Brightness() },
+                volume = {},
                 tiles = { Tiles(TILES_HEIGHT_PORTRAIT) },
                 media = { Media() },
                 mediaInRow = false,
@@ -125,6 +126,7 @@ class QSFragmentComposeTest : SysuiTestCase() {
             QuickSettingsLayout(
                 quickActions = {},
                 brightness = { Brightness() },
+                volume = {},
                 tiles = { Tiles(TILES_HEIGHT_PORTRAIT) },
                 media = { Media() },
                 mediaInRow = true,

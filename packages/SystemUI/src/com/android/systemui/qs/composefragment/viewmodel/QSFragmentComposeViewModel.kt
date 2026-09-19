@@ -17,6 +17,7 @@
 package com.android.systemui.qs.composefragment.viewmodel
 
 import android.content.res.Resources
+import android.media.AudioManager
 import androidx.annotation.FloatRange
 import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.derivedStateOf
@@ -30,6 +31,7 @@ import androidx.lifecycle.LifecycleCoroutineScope
 import com.android.app.tracing.coroutines.launchTraced as launch
 import com.android.internal.logging.UiEventLogger
 import com.android.keyguard.BouncerPanelExpansionCalculator
+import com.android.settingslib.volume.shared.model.AudioStream
 import com.android.systemui.Dumpable
 import com.android.systemui.animation.ShadeInterpolation
 import com.android.systemui.classifier.Classifier
@@ -79,6 +81,8 @@ import com.android.systemui.util.kotlin.emitOnStart
 import com.android.systemui.util.printSection
 import com.android.systemui.util.println
 import com.android.systemui.utils.coroutines.flow.conflatedCallbackFlow
+import com.android.systemui.volume.panel.component.volume.domain.model.SliderType
+import com.android.systemui.volume.panel.component.volume.slider.ui.viewmodel.AudioStreamSliderViewModel
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -100,6 +104,7 @@ constructor(
     @ShadeDisplayAware private val resources: Resources,
     quickQuickSettingsViewModelFactory: QuickQuickSettingsViewModel.Factory,
     val quickActionsGridViewModel: QuickActionsGridViewModel,
+    audioStreamSliderViewModelFactory: AudioStreamSliderViewModel.Factory,
     footerActionsViewModelFactory: FooterActionsViewModel.Factory,
     private val footerActionsController: FooterActionsController,
     private val sysuiStatusBarStateController: SysuiStatusBarStateController,
@@ -125,6 +130,18 @@ constructor(
 
     val containerViewModel = containerViewModelFactory.create(supportsBrightnessMirroring = true)
     val quickQuickSettingsViewModel = quickQuickSettingsViewModelFactory.create()
+
+    /**
+     * Volume (media) slider shown in expanded QS, directly below the brightness slider. Reuses the
+     * same view model/composable as the volume panel and the QS shade overlay.
+     */
+    val volumeSliderViewModel: AudioStreamSliderViewModel =
+        audioStreamSliderViewModelFactory.create(
+            AudioStreamSliderViewModel.FactoryAudioStreamWrapper(
+                SliderType.Stream(AudioStream(AudioManager.STREAM_MUSIC)).stream
+            ),
+            lifecycleScope,
+        )
 
     val qsMediaUiBehavior =
         MediaUiBehavior(

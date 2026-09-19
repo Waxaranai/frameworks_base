@@ -93,6 +93,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.android.app.tracing.coroutines.launchTraced
+import com.android.compose.PlatformSliderDefaults
 import com.android.compose.animation.scene.ContentKey
 import com.android.compose.animation.scene.ContentScope
 import com.android.compose.animation.scene.ElementKey
@@ -158,6 +159,7 @@ import com.android.systemui.util.asIndenting
 import com.android.systemui.util.kotlin.pairwise
 import com.android.systemui.util.printSection
 import com.android.systemui.util.println
+import com.android.systemui.volume.panel.component.volume.ui.composable.VolumeSlider
 import java.io.PrintWriter
 import java.util.function.Consumer
 import javax.inject.Inject
@@ -865,6 +867,51 @@ constructor(
                                     }
                                 }
                             }
+                        val Volume =
+                            @Composable {
+                                val volumeSliderViewModel = viewModel.volumeSliderViewModel
+                                val volumeSliderState by
+                                    volumeSliderViewModel.slider.collectAsStateWithLifecycle()
+                                Box(
+                                    Modifier.systemGestureExclusionInShade(
+                                        enabled = {
+                                            layoutState.transitionState is TransitionState.Idle &&
+                                                viewModel.isNotTransitioning
+                                        }
+                                    )
+                                ) {
+                                    AlwaysDarkMode {
+                                        VolumeSlider(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            showLabel = false,
+                                            state = volumeSliderState,
+                                            onValueChange = { newValue: Float ->
+                                                volumeSliderViewModel.onValueChanged(
+                                                    volumeSliderState,
+                                                    newValue,
+                                                )
+                                            },
+                                            onValueChangeFinished = {
+                                                volumeSliderViewModel.onValueChangeFinished()
+                                            },
+                                            onIconTapped = {
+                                                volumeSliderViewModel.toggleMuted(
+                                                    volumeSliderState
+                                                )
+                                            },
+                                            sliderColors =
+                                                PlatformSliderDefaults
+                                                    .defaultPlatformSliderColors(),
+                                            hapticsViewModelFactory =
+                                                volumeSliderViewModel
+                                                    .getSliderHapticsViewModelFactory(),
+                                            dimensions =
+                                                QuickSettingsShade.Dimensions
+                                                    .VolumeSliderDimensions,
+                                        )
+                                    }
+                                }
+                            }
                         // When always compose is false, this will always be true, and
                         // we'll be listening whenever this is composed. When always
                         // compose is true, we look a the second condition and we'll
@@ -931,6 +978,7 @@ constructor(
                                     } else {
                                         {}
                                     },
+                                volume = { Volume() },
                                 tiles = TileGrid,
                                 media = Media,
                                 mediaInRow = viewModel.qsMediaInRow,
@@ -1463,6 +1511,7 @@ fun QuickQuickSettingsLayout(
 fun QuickSettingsLayout(
     quickActions: @Composable () -> Unit,
     brightness: @Composable () -> Unit,
+    volume: @Composable () -> Unit,
     tiles: @Composable () -> Unit,
     media: @Composable () -> Unit,
     mediaInRow: Boolean,
@@ -1474,6 +1523,7 @@ fun QuickSettingsLayout(
         ) {
             quickActions()
             brightness()
+            volume()
             Row(
                 horizontalArrangement = spacedBy(QuickSettingsShade.Dimensions.HorizontalPadding),
                 verticalAlignment = Alignment.CenterVertically,
@@ -1489,6 +1539,7 @@ fun QuickSettingsLayout(
         ) {
             quickActions()
             brightness()
+            volume()
             tiles()
             media()
         }
