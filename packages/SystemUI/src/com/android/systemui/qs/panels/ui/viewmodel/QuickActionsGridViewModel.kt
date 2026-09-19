@@ -22,39 +22,46 @@ import com.android.systemui.animation.Expandable
 import com.android.systemui.dagger.SysUISingleton
 import com.android.systemui.haptics.msdl.qs.TileHapticsViewModel
 import com.android.systemui.plugins.qs.QSTile
-import com.android.systemui.qs.flags.QsSplitInternetTile
+import com.android.systemui.qs.edith.QuickActionsInteractor
 import com.android.systemui.qs.panels.shared.model.SizedTileImpl
 import com.android.systemui.qs.pipeline.domain.interactor.CurrentTilesInteractor
 import com.android.systemui.qs.pipeline.shared.TileSpec
 import javax.inject.Inject
 
 /**
- * View model backing the fixed "Quick Actions" grid.
+ * View model backing the "Quick Actions" grid.
  *
- * The grid shows up to [TILE_COUNT] (4) fixed 1x1 tiles in a 2x2 layout. It first picks from
- * [preferredSpecs] (WiFi, Bluetooth, Mobile data, Hotspot) and backfills any missing or unavailable
- * ones with [FALLBACK_SPECS], so the grid is always full even on devices without cellular, Wi-Fi, or
- * Bluetooth.
+ * The grid shows up to [TILE_COUNT] (4) fixed 1x1 tiles in a 2x2 layout, in the order given by
+ * [QuickActionsInteractor] (the user-editable list, defaulting to the connectivity tiles). Tiles
+ * that are unavailable on the current device are dropped.
  *
- * Resolution is done once, at startup ([CurrentTilesInteractor.createTileSync]); the tiles are not
- * resizable and are not necessarily part of the user's selectable QS tile list.
+ * Tiles are resolved through [CurrentTilesInteractor.createTileSync]; they are not resizable and are
+ * not necessarily part of the user's selectable QS tile list.
  */
 @SysUISingleton
 class QuickActionsGridViewModel
 @Inject
 constructor(
     private val tilesInteractor: CurrentTilesInteractor,
+    private val quickActionsInteractor: QuickActionsInteractor,
     val squishinessViewModel: TileSquishinessViewModel,
     val tileHapticsViewModelFactory: TileHapticsViewModel.Factory,
 ) {
 
-    // Resolved lazily, once, and kept for the lifetime of the (singleton) view model. Recreating
-    // tiles on every recomposition would leak listeners and create duplicate tiles.
-    private val tiles: List<Pair<TileSpec, QSTile>> by lazy { resolveTiles() }
+    // Cache of created tiles, keyed by spec. Tiles are expensive and listener-bound, so they are
+    // created at most once per spec and reused across list edits.
+    private val tileCache = mutableMapOf<TileSpec, QSTile?>()
 
     /** Tiles, in display order, for the 2x2 grid. At most [TILE_COUNT] entries. */
     val tileViewModels: List<TileViewModel> by derivedStateOf {
-        tiles.map { (spec, tile) -> TileViewModel(tile, spec, Expandable()) }
+        val resolved = mutableListOf<TileViewModel>()
+        for (spec in quickActionsInteractor.specs.value) {
+            if (resolved.size == TILE_COUNT) break
+            if (resolved.any { it.spec == spec }) continue
+            val tile = getOrCreateTile(spec) ?: continue
+            resolved += TileViewModel(tile, spec, Expandable())
+        }
+        resolved
     }
 
     /** The tiles as [SizedTile]s, all with a fixed width of 1 (non-resizable). */
@@ -62,68 +69,25 @@ constructor(
         tileViewModels.map { SizedTileImpl(it, width = 1) }
     }
 
-    private fun resolveTiles(): List<Pair<TileSpec, QSTile>> {
-        val resolved = mutableListOf<Pair<TileSpec, QSTile>>()
-        // Preferred tiles first (in order), then backfill with fallbacks to fill the grid.
-        for (spec in preferredSpecs + FALLBACK_SPECS) {
-            if (resolved.size == TILE_COUNT) break
-            if (resolved.any { it.first == spec }) continue
-            val tile = createAvailableTile(spec) ?: continue
-            resolved += spec to tile
+    private fun getOrCreateTile(spec: TileSpec): QSTile? {
+        if (tileCache.containsKey(spec)) {
+            return tileCache[spec]
         }
-        return resolved
-    }
-
-    private fun createAvailableTile(spec: TileSpec): QSTile? {
-        val tile = tilesInteractor.createTileSync(spec) ?: return null
-        if (!tile.isAvailable) {
-            tile.destroy()
-            return null
+        val tile = tilesInteractor.createTileSync(spec)
+        val available = tile != null && tile.isAvailable
+        if (!available) {
+            tile?.destroy()
         }
-        return tile
+        val result = if (available) tile else null
+        tileCache[spec] = result
+        return result
     }
 
     companion object {
-        /** Number of columns of the fixed Quick Actions grid. */
+        /** Number of columns of the Quick Actions grid. */
         const val COLUMNS = 2
 
         /** Total number of tiles in the grid (2x2). */
         const val TILE_COUNT = COLUMNS * 2
-
-        /**
-         * Preferred specs shown in the Quick Actions grid, in order (row-major).
-         *
-         * When the internet tile is split, WiFi and Mobile data are separate tiles. Otherwise they
-         * are combined into a single "internet" tile, which fills the first slot.
-         */
-        val preferredSpecs: List<TileSpec>
-            get() =
-                if (QsSplitInternetTile.isEnabled) {
-                    listOf(
-                        TileSpec.create("wifi"),
-                        TileSpec.create("cell"),
-                        TileSpec.create("bt"),
-                        TileSpec.create("hotspot"),
-                    )
-                } else {
-                    listOf(
-                        TileSpec.create("internet"),
-                        TileSpec.create("bt"),
-                        TileSpec.create("hotspot"),
-                    )
-                }
-
-        /**
-         * Specs used to backfill the grid when a preferred tile is missing or unavailable (for
-         * example on devices without cellular). Chosen to be broadly available on most devices.
-         */
-        val FALLBACK_SPECS: List<TileSpec> =
-            listOf(
-                TileSpec.create("airplane"),
-                TileSpec.create("dnd"),
-                TileSpec.create("rotation"),
-                TileSpec.create("flashlight"),
-                TileSpec.create("battery"),
-            )
     }
 }
