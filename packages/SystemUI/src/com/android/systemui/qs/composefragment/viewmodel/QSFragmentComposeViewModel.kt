@@ -59,6 +59,7 @@ import com.android.systemui.qs.FooterActionsController
 import com.android.systemui.qs.QSEvent
 import com.android.systemui.qs.composefragment.dagger.QSFragmentComposeLog
 import com.android.systemui.qs.composefragment.dagger.QSFragmentComposeModule
+import com.android.systemui.qs.edith.EdithQsStyleInteractor
 import com.android.systemui.qs.footer.ui.viewmodel.FooterActionsViewModel
 import com.android.systemui.qs.panels.domain.interactor.TileSquishinessInteractor
 import com.android.systemui.qs.panels.ui.viewmodel.InFirstPageViewModel
@@ -104,6 +105,7 @@ constructor(
     @ShadeDisplayAware private val resources: Resources,
     quickQuickSettingsViewModelFactory: QuickQuickSettingsViewModel.Factory,
     val quickActionsGridViewModel: QuickActionsGridViewModel,
+    private val edithQsStyleInteractor: EdithQsStyleInteractor,
     audioStreamSliderViewModelFactory: AudioStreamSliderViewModel.Factory,
     footerActionsViewModelFactory: FooterActionsViewModel.Factory,
     private val footerActionsController: FooterActionsController,
@@ -130,6 +132,7 @@ constructor(
 
     val containerViewModel = containerViewModelFactory.create(supportsBrightnessMirroring = true)
     val quickQuickSettingsViewModel = quickQuickSettingsViewModelFactory.create()
+
 
     /**
      * Volume (media) slider shown in expanded QS, directly below the brightness slider. Reuses the
@@ -205,6 +208,14 @@ constructor(
                         largeScreenHeaderHelper.getLargeScreenHeaderHeight()
                     }
                 },
+        )
+
+    /** Whether the Edith Quick Settings style is enabled (Quick Actions grid, volume, 1x1 tiles). */
+    val edithStyleEnabled by
+        hydrator.hydratedStateOf(
+            traceName = "edithStyleEnabled",
+            initialValue = false,
+            source = edithQsStyleInteractor.isEnabled,
         )
 
     val qqsBottomPadding by

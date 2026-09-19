@@ -145,6 +145,7 @@ import com.android.systemui.qs.footer.ui.compose.FooterActions
 import com.android.systemui.qs.panels.shared.model.QSFragmentComposeClippingTableLog
 import com.android.systemui.qs.panels.ui.compose.EditMode
 import com.android.systemui.qs.panels.ui.compose.QuickActionsGrid
+import com.android.systemui.qs.panels.ui.compose.QuickQuickSettings
 import com.android.systemui.qs.panels.ui.compose.TileGrid
 import com.android.systemui.qs.shared.ui.QuickSettings.Elements
 import com.android.systemui.qs.ui.composable.QuickSettingsShade
@@ -727,6 +728,13 @@ constructor(
                             }
                         }
                         .let { state -> { state.value } }
+                val Tiles =
+                    @Composable {
+                        QuickQuickSettings(
+                            viewModel = viewModel.quickQuickSettingsViewModel,
+                            listening = isListening,
+                        )
+                    }
                 val Media =
                     @Composable {
                         if (viewModel.qqsMediaVisible) {
@@ -765,13 +773,21 @@ constructor(
                     ) {
                         QuickQuickSettingsLayout(
                             quickActions = {
-                                QuickActionsGrid(
-                                    viewModel = viewModel.quickActionsGridViewModel,
-                                    modifier = Modifier.fillMaxWidth(),
-                                    listening = isListening,
-                                )
+                                if (viewModel.edithStyleEnabled) {
+                                    QuickActionsGrid(
+                                        viewModel = viewModel.quickActionsGridViewModel,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        listening = isListening,
+                                    )
+                                }
                             },
-                            tiles = {},
+                            // In the Edith style, QQS shows only the Quick Actions grid (plus media).
+                            tiles =
+                                if (viewModel.edithStyleEnabled) {
+                                    {}
+                                } else {
+                                    Tiles
+                                },
                             media = Media,
                             mediaInRow = viewModel.qqsMediaInRow,
                         )
@@ -966,11 +982,13 @@ constructor(
                         ) {
                             QuickSettingsLayout(
                                 quickActions = {
-                                    QuickActionsGrid(
-                                        viewModel = viewModel.quickActionsGridViewModel,
-                                        modifier = Modifier.fillMaxWidth(),
-                                        listening = isListening,
-                                    )
+                                    if (viewModel.edithStyleEnabled) {
+                                        QuickActionsGrid(
+                                            viewModel = viewModel.quickActionsGridViewModel,
+                                            modifier = Modifier.fillMaxWidth(),
+                                            listening = isListening,
+                                        )
+                                    }
                                 },
                                 brightness =
                                     if (viewModel.isBrightnessSliderVisible) {
@@ -978,7 +996,12 @@ constructor(
                                     } else {
                                         {}
                                     },
-                                volume = { Volume() },
+                                volume =
+                                    if (viewModel.edithStyleEnabled) {
+                                        { Volume() }
+                                    } else {
+                                        {}
+                                    },
                                 tiles = TileGrid,
                                 media = Media,
                                 mediaInRow = viewModel.qsMediaInRow,

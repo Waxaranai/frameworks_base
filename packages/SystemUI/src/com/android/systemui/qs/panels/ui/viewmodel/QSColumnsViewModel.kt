@@ -21,6 +21,8 @@ import androidx.compose.runtime.getValue
 import com.android.systemui.lifecycle.HydratedActivatable
 import com.android.systemui.media.controls.ui.controller.MediaLocation
 import com.android.systemui.media.remedia.ui.compose.MediaUiBehavior
+import com.android.systemui.qs.edith.EdithQsStyleInteractor
+import com.android.systemui.qs.panels.domain.interactor.LargeTileSpanInteractor
 import com.android.systemui.qs.panels.domain.interactor.QSColumnsInteractor
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -31,17 +33,21 @@ import kotlinx.coroutines.launch
 /**
  * View model for the number of columns that should be shown in a QS grid.
  *
- * The number of columns is resource-driven (see [QSColumnsInteractor]). The Edith QS style keeps
- * the configured column count but forces every tile to 1x1 (see [largeSpan]).
+ * When the Edith QS style is enabled, every tile is forced to 1x1 (see [largeSpan]); otherwise the
+ * number of columns and large-tile span are resource-driven.
  */
 class QSColumnsViewModel
 @AssistedInject
 constructor(
     interactor: QSColumnsInteractor,
     mediaInRowInLandscapeViewModelFactory: MediaInRowInLandscapeViewModel.Factory,
+    private val largeTileSpanInteractor: LargeTileSpanInteractor,
+    edithQsStyleInteractor: EdithQsStyleInteractor,
     @Assisted @MediaLocation mediaLocation: Int?,
     @Assisted mediaUiBehavior: MediaUiBehavior?,
 ) : HydratedActivatable() {
+
+    private val edithStyleEnabled by edithQsStyleInteractor.isEnabled.hydratedStateOf()
 
     val columns by derivedStateOf {
         if (mediaInRowInLandscapeViewModel?.shouldMediaShowInRow == true) {
@@ -51,9 +57,24 @@ constructor(
         }
     }
 
-    // Edith QS style: no large (span > 1) tiles, every tile is 1x1.
+    private val maxSpan by
+        largeTileSpanInteractor.tileMaxWidth.hydratedStateOf(
+            initialValue = largeTileSpanInteractor.defaultTileMaxWidth
+        )
+
+    private val useExtraLargeTiles by
+        largeTileSpanInteractor.useExtraLargeTiles.hydratedStateOf(initialValue = false)
+
     val largeSpan: Int
-        get() = 1
+        get() =
+            if (edithStyleEnabled) {
+                // Edith QS style: no large (span > 1) tiles, every tile is 1x1.
+                1
+            } else if (useExtraLargeTiles) {
+                if (columns > maxSpan) columns / 2 else columns
+            } else {
+                largeTileSpanInteractor.defaultTileMaxWidth
+            }
 
     private val mediaInRowInLandscapeViewModel =
         if (mediaLocation != null && mediaUiBehavior != null) {

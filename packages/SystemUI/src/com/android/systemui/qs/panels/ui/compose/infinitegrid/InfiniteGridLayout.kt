@@ -113,8 +113,8 @@ constructor(
             Element(it.tile.spec.toElementKey(), Modifier) {
                 Tile(
                     tile = it.tile,
-                    // Edith QS style: every tile is 1x1, so always use the compact icon layout.
-                    iconOnly = true,
+                    // 1x1 tiles (e.g. the Edith QS style) use the compact icon layout.
+                    iconOnly = it.width == 1,
                     squishiness = { squishiness },
                     tileHapticsViewModelFactory = tileHapticsViewModelFactory,
                     coroutineScope = scope,

@@ -30,6 +30,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -39,6 +40,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.integerResource
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.compose.animation.scene.ContentScope
 import com.android.compose.modifiers.padding
 import com.android.systemui.common.ui.compose.PagerDots
@@ -46,6 +48,7 @@ import com.android.systemui.compose.modifiers.sysuiResTag
 import com.android.systemui.development.ui.compose.BuildNumber
 import com.android.systemui.development.ui.viewmodel.BuildNumberViewModel
 import com.android.systemui.lifecycle.rememberViewModel
+import com.android.systemui.qs.edith.EdithQsStyleInteractor
 import com.android.systemui.qs.panels.dagger.PaginatedBaseLayoutType
 import com.android.systemui.qs.panels.ui.compose.Dimensions.FooterHeight
 import com.android.systemui.qs.panels.ui.compose.Dimensions.InterPageSpacing
@@ -60,6 +63,7 @@ class PaginatedGridLayout
 @Inject
 constructor(
     private val viewModelFactory: PaginatedGridViewModel.Factory,
+    private val edithQsStyleInteractor: EdithQsStyleInteractor,
     @PaginatedBaseLayoutType private val delegateGridLayout: PaginatableGridLayout,
 ) : GridLayout by delegateGridLayout {
     @Composable
@@ -78,7 +82,11 @@ constructor(
                 delegateGridLayout.viewModelFactory.create()
             }
 
-        val rows = integerResource(R.integer.quick_settings_paginated_grid_num_rows)
+        // The Edith QS style shows 2 rows per page; the stock layout uses the resource value.
+        val edithStyleEnabled by edithQsStyleInteractor.isEnabled.collectAsStateWithLifecycle()
+        val rows =
+            if (edithStyleEnabled) 2
+            else integerResource(R.integer.quick_settings_paginated_grid_num_rows)
         val pages =
             remember(tiles, rows, *delegateGridViewModel.pageKeys) {
                 delegateGridViewModel.splitIntoPages(tiles, rows)
