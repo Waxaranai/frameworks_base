@@ -60,6 +60,7 @@ import com.android.systemui.qs.QSEvent
 import com.android.systemui.qs.composefragment.dagger.QSFragmentComposeLog
 import com.android.systemui.qs.composefragment.dagger.QSFragmentComposeModule
 import com.android.systemui.qs.edith.EdithQsStyleInteractor
+import com.android.systemui.qs.edith.QuickActionsEditViewModel
 import com.android.systemui.qs.footer.ui.viewmodel.FooterActionsViewModel
 import com.android.systemui.qs.panels.domain.interactor.TileSquishinessInteractor
 import com.android.systemui.qs.panels.ui.viewmodel.InFirstPageViewModel
@@ -105,6 +106,7 @@ constructor(
     @ShadeDisplayAware private val resources: Resources,
     quickQuickSettingsViewModelFactory: QuickQuickSettingsViewModel.Factory,
     val quickActionsGridViewModel: QuickActionsGridViewModel,
+    val quickActionsEditViewModel: QuickActionsEditViewModel,
     private val edithQsStyleInteractor: EdithQsStyleInteractor,
     audioStreamSliderViewModelFactory: AudioStreamSliderViewModel.Factory,
     footerActionsViewModelFactory: FooterActionsViewModel.Factory,

@@ -143,6 +143,9 @@ import com.android.systemui.qs.composefragment.ui.toEditMode
 import com.android.systemui.qs.composefragment.viewmodel.QSFragmentComposeViewModel
 import com.android.systemui.qs.footer.ui.compose.FooterActions
 import com.android.systemui.qs.panels.shared.model.QSFragmentComposeClippingTableLog
+import com.android.systemui.qs.edith.EditZone
+import com.android.systemui.qs.edith.EdithEditLanding
+import com.android.systemui.qs.edith.QuickActionsEdit
 import com.android.systemui.qs.panels.ui.compose.EditMode
 import com.android.systemui.qs.panels.ui.compose.QuickActionsGrid
 import com.android.systemui.qs.panels.ui.compose.QuickQuickSettings
@@ -1023,17 +1026,56 @@ constructor(
     }
 
     @Composable
-    private fun EditModeElement(modifier: Modifier = Modifier) {
+    private fun ContentScope.EditModeElement(modifier: Modifier = Modifier) {
         // No need for top padding, the Scaffold inside takes care of the correct insets
         val horizontalPadding = QuickSettingsShade.Dimensions.HorizontalPadding
-        EditMode(
-            viewModel = viewModel.containerViewModel.editModeViewModel,
-            modifier =
-                modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = { horizontalPadding.roundToPx() })
-                    .padding(top = { viewModel.qqsHeaderHeight }),
-        )
+        val editModifier =
+            modifier
+                .fillMaxWidth()
+                .padding(horizontal = { horizontalPadding.roundToPx() })
+                .padding(top = { viewModel.qqsHeaderHeight })
+        val quickActionsEditor = viewModel.quickActionsEditViewModel
+        val stopEditing = viewModel.containerViewModel.editModeViewModel::stopEditing
+        if (viewModel.edithStyleEnabled) {
+            LaunchedEffect(Unit) { quickActionsEditor.startEditing() }
+            val zone by quickActionsEditor.zone.collectAsStateWithLifecycle()
+            when (zone) {
+                EditZone.QuickActions -> {
+                    QuickActionsEdit(
+                        viewModel = quickActionsEditor,
+                        modifier = editModifier,
+                    )
+                }
+                EditZone.QsTiles -> {
+                    EditMode(
+                        viewModel = viewModel.containerViewModel.editModeViewModel,
+                        modifier = editModifier,
+                        onStopEditing = quickActionsEditor::backToLanding,
+                    )
+                }
+                EditZone.Landing,
+                EditZone.None -> {
+                    val specs by quickActionsEditor.currentSpecs.collectAsStateWithLifecycle()
+                    EdithEditLanding(
+                        quickActionsGridViewModel = viewModel.quickActionsGridViewModel,
+                        quickActionsSpecs = specs,
+                        qsTiles = viewModel.containerViewModel.tileGridViewModel.tileViewModels,
+                        onEditQuickActions = {
+                            quickActionsEditor.openZone(EditZone.QuickActions)
+                        },
+                        onEditQsTiles = { quickActionsEditor.openZone(EditZone.QsTiles) },
+                        onReset = { quickActionsEditor.showResetDialog() },
+                        onStopEditing = stopEditing,
+                        modifier = editModifier,
+                    )
+                }
+            }
+        } else {
+            EditMode(
+                viewModel = viewModel.containerViewModel.editModeViewModel,
+                modifier = editModifier,
+            )
+        }
     }
 
     private fun Modifier.collapseExpandSemanticAction(label: String): Modifier {

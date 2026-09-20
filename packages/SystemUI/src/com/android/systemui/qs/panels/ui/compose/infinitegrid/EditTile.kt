@@ -437,7 +437,7 @@ private fun NavBarInsetScrollZone(modifier: Modifier = Modifier, content: @Compo
  * selection was removed from the grid.
  */
 @Composable
-private fun AutoSelectTiles(listState: EditTileListState, selectionState: MutableSelectionState) {
+internal fun AutoSelectTiles(listState: EditTileListState, selectionState: MutableSelectionState) {
     val specs = listState.tileSpecs()
     val selection = selectionState.selection
 
@@ -535,7 +535,7 @@ private fun rememberEditModeState(
 }
 
 @Composable
-private fun TopBarSubtitle(
+internal fun TopBarSubtitle(
     listState: EditTileListState,
     selectionState: MutableSelectionState,
     modifier: Modifier = Modifier,
@@ -557,7 +557,7 @@ private fun TopBarSubtitle(
 }
 
 @Composable
-private fun RemoveButton(
+internal fun RemoveButton(
     enabled: Boolean,
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {},
@@ -598,10 +598,11 @@ private fun RemoveButton(
 }
 
 @Composable
-private fun CurrentTilesGrid(
+internal fun CurrentTilesGrid(
     listState: EditTileListState,
     selectionState: MutableSelectionState,
     onEditAction: (EditAction) -> Unit,
+    labelTiles: Boolean = false,
 ) {
     val currentListState by rememberUpdatedState(listState)
     val totalRows = listState.tiles.lastOrNull()?.row ?: 0
@@ -649,6 +650,7 @@ private fun CurrentTilesGrid(
             gridState = gridState,
             coroutineScope = coroutineScope,
             onRemoveTile = { onEditAction(EditAction.RemoveTile(it)) },
+            labelTiles = labelTiles,
         ) { resizingOperation ->
             when (resizingOperation) {
                 is TemporaryResizeOperation -> {
@@ -690,7 +692,7 @@ private fun TileLazyGrid(
 }
 
 @Composable
-private fun AnimatedAvailableTilesGrid(
+internal fun AnimatedAvailableTilesGrid(
     allTiles: List<EditTileViewModel>,
     listState: EditTileListState,
     selectionState: MutableSelectionState,
@@ -698,6 +700,7 @@ private fun AnimatedAvailableTilesGrid(
     canLayoutTile: Boolean,
     onEditAction: (EditAction) -> Unit,
     modifier: Modifier = Modifier,
+    availableColumns: Int = listState.columns,
 ) {
     // Sets a minimum height to be used when available tiles are hidden
     Box(
@@ -721,7 +724,7 @@ private fun AnimatedAvailableTilesGrid(
                 AvailableTileGrid(
                     allTiles,
                     selectionState,
-                    listState.columns,
+                    availableColumns,
                     canLayoutTile = canLayoutTile,
                     { onEditAction(EditAction.AddTile(it)) }, // Add to the end
                     listState,
@@ -853,6 +856,7 @@ fun LazyGridScope.EditTiles(
     gridState: LazyGridState,
     coroutineScope: CoroutineScope,
     onRemoveTile: (TileSpec) -> Unit,
+    labelTiles: Boolean = false,
     onResize: (operation: ResizeOperation) -> Unit,
 ) {
     itemsIndexed(
@@ -885,6 +889,7 @@ fun LazyGridScope.EditTiles(
                         onRemoveTile = onRemoveTile,
                         coroutineScope = coroutineScope,
                         largeTilesSpan = listState.largeTilesSpan,
+                        labelTiles = labelTiles,
                     )
                 }
             is SpacerGridCell ->
@@ -923,6 +928,7 @@ private fun LazyGridItemScope.TileGridCell(
     onRemoveTile: (TileSpec) -> Unit,
     coroutineScope: CoroutineScope,
     largeTilesSpan: Int,
+    labelTiles: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val stateDescription = stringResource(id = R.string.accessibility_qs_edit_position, index + 1)
@@ -1104,9 +1110,14 @@ private fun LazyGridItemScope.TileGridCell(
         ) {
             if (largeTilesSpan > 1) {
                 EditTile(tile = cell.tile, state = resizingState, progress = resizingState::progress)
+            } else if (labelTiles) {
+                // Edith Quick Actions editor: tiles are fixed 1x1 but should show their label,
+                // matching the Quick Actions preview. There is no resizing, so the tile is always
+                // rendered at full progress (icon on the leading side, label to its right).
+                EditTile(tile = cell.tile, state = resizingState, progress = { 1f })
             } else {
-                // Edith QS style: every tile is a fixed 1x1 icon tile, so render it compactly
-                // instead of using the resizable large-tile layout.
+                // Edith QS style (e.g. the stock QS editor): every tile is a fixed 1x1 icon tile,
+                // so render it compactly (icon only), matching the QS tiles preview.
                 CompactEditTile(tile = cell.tile, colors = colors)
             }
         }

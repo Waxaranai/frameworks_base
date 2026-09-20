@@ -21,6 +21,7 @@ import android.content.SharedPreferences
 import androidx.core.content.edit
 import com.android.systemui.dagger.SysUISingleton
 import com.android.systemui.dagger.qualifiers.Background
+import com.android.systemui.qs.flags.QsSplitInternetTile
 import com.android.systemui.qs.panels.data.repository.QSPreferencesRepository
 import com.android.systemui.qs.pipeline.shared.TileSpec
 import com.android.systemui.settings.UserFileManager
@@ -41,7 +42,8 @@ import kotlinx.coroutines.flow.map
  * The list is per-user and stored as an ordered, comma-separated string in the same preferences
  * file used by the rest of the QS user preferences ([QSPreferencesRepository.FILE_NAME]).
  *
- * Only up to [MAX_SPECS] specs are kept, matching the fixed 2x2 Quick Actions grid.
+ * The list can hold any number of tiles; the live Quick Actions grid only shows the first
+ * [MAX_SPECS] of them.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @SysUISingleton
@@ -57,14 +59,13 @@ constructor(
         userRepository.selectedUserInfo
             .flatMapLatest { userInfo ->
                 val prefs = getSharedPrefs(userInfo.id)
-                prefs.observe().emitOnStart().map { prefs.getQuickActionSpecs() }
+                prefs.observe().emitOnStart().map { prefs.getOrSeedQuickActionSpecs() }
             }
             .flowOn(backgroundDispatcher)
 
     /** Replaces the Quick Actions list for the current user with [specs]. */
     fun writeQuickActionSpecs(specs: List<TileSpec>) {
-        val sanitized =
-            specs.distinct().filterNot { it is TileSpec.Invalid }.take(MAX_SPECS)
+        val sanitized = specs.distinct().filterNot { it is TileSpec.Invalid }
         getSharedPrefs(userRepository.getSelectedUserInfo().id).writeQuickActionSpecs(sanitized)
     }
 
@@ -72,15 +73,21 @@ constructor(
         edit { putString(QUICK_ACTION_SPECS_KEY, specs.joinToString(SEPARATOR) { it.spec }) }
     }
 
-    private fun SharedPreferences.getQuickActionSpecs(): List<TileSpec> {
-        val stored = getString(QUICK_ACTION_SPECS_KEY, null) ?: return emptyList()
-        if (stored.isEmpty()) return emptyList()
+    /**
+     * Returns the stored specs, seeding (and persisting) the [defaultSpecs] the first time so the
+     * stored list is always authoritative and user edits reliably persist.
+     */
+    private fun SharedPreferences.getOrSeedQuickActionSpecs(): List<TileSpec> {
+        if (!contains(QUICK_ACTION_SPECS_KEY)) {
+            writeQuickActionSpecs(defaultSpecs)
+            return defaultSpecs
+        }
+        val stored = getString(QUICK_ACTION_SPECS_KEY, null).orEmpty()
         return stored
             .split(SEPARATOR)
             .map(TileSpec::create)
             .filterNot { it is TileSpec.Invalid }
             .distinct()
-            .take(MAX_SPECS)
     }
 
     private fun getSharedPrefs(userId: Int): SharedPreferences {
@@ -92,10 +99,34 @@ constructor(
     }
 
     companion object {
-        /** Maximum number of Quick Actions tiles (2x2 grid). */
+        /** Number of tiles shown in the live 2x2 Quick Actions grid (the stored list can be longer). */
         const val MAX_SPECS = 4
 
         private const val QUICK_ACTION_SPECS_KEY = "quick_action_specs"
         private const val SEPARATOR = ","
+
+        /**
+         * Default specs used until the user customizes the list.
+         *
+         * When the internet tile is split, WiFi and Mobile data are separate tiles. Otherwise they
+         * are combined into a single "internet" tile.
+         */
+        val defaultSpecs: List<TileSpec>
+            get() =
+                if (QsSplitInternetTile.isEnabled) {
+                    listOf(
+                        TileSpec.create("wifi"),
+                        TileSpec.create("cell"),
+                        TileSpec.create("bt"),
+                        TileSpec.create("hotspot"),
+                    )
+                } else {
+                    listOf(
+                        TileSpec.create("internet"),
+                        TileSpec.create("bt"),
+                        TileSpec.create("hotspot"),
+                        TileSpec.create("airplane"),
+                    )
+                }
     }
 }

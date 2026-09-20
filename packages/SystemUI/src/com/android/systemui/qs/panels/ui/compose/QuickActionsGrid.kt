@@ -48,7 +48,8 @@ fun ContentScope.QuickActionsGrid(
     listening: () -> Boolean,
 ) {
     val columns = COLUMNS
-    val sizedTiles = viewModel.sizedTiles
+    val specs by viewModel.specs.collectAsStateWithLifecycle()
+    val sizedTiles = viewModel.sizedTiles(specs)
     val tiles = sizedTiles.fastMap { it.tile }
     val squishiness by viewModel.squishinessViewModel.squishiness.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
