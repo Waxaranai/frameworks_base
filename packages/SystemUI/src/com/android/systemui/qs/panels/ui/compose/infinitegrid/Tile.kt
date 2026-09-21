@@ -36,6 +36,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
@@ -50,12 +53,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalResources
@@ -67,6 +72,8 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.toggleableState
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.min
 import androidx.compose.ui.util.trace
 import com.android.app.tracing.coroutines.launchTraced as launch
 import com.android.compose.animation.Expandable
@@ -148,6 +155,8 @@ fun ContentScope.Tile(
     requestToggleTextFeedback: (TileSpec) -> Unit = {},
     detailsViewModel: DetailsViewModel?,
     enableRevealEffect: Boolean = false,
+    edithTileStyle: Boolean = false,
+    edithSquareSize: Dp? = null,
 ) {
     trace(tile.traceName) {
         val currentBounceableInfo by rememberUpdatedState(bounceableInfo)
@@ -176,7 +185,21 @@ fun ContentScope.Tile(
             }
 
         // TODO(b/361789146): Draw the shapes instead of clipping
-        val tileShape by TileDefaults.animateTileShapeAsState(uiState)
+        // Edith QS style: square tiles, a perfect circle when inactive and a squircle when active.
+        val tileShape by
+            if (edithTileStyle) {
+                remember(uiState.visualState) {
+                    mutableStateOf(
+                        if (uiState.visualState == STATE_ACTIVE) {
+                            RoundedCornerShape(EdithActiveCornerRadius)
+                        } else {
+                            RoundedCornerShape(percent = 50)
+                        }
+                    )
+                }
+            } else {
+                TileDefaults.animateTileShapeAsState(uiState)
+            }
         val animatedColor by animateColorAsState(colors.background, label = "QSTileBackgroundColor")
         val isDualTarget = uiState.handlesToggleClick
         val hasLongClickEffect = uiState.hasLongClickEffect
@@ -227,6 +250,16 @@ fun ContentScope.Tile(
                 hapticsViewModel = hapticsViewModel.takeIf { hasLongClickEffect },
                 modifier =
                     modifier
+                        .then(
+                            // Fixed square height (Edith) applied outermost so the tap
+                            // squish/bounce animation cannot change the grid height (which moves
+                            // the PagerDots).
+                            if (edithSquareSize != null) {
+                                Modifier.height(edithSquareSize)
+                            } else {
+                                Modifier
+                            }
+                        )
                         .then(surfaceRevealModifier)
                         .borderOnFocus(
                             color = MaterialTheme.colorScheme.secondary,
@@ -310,17 +343,39 @@ fun ContentScope.Tile(
                     iconOnly = iconOnly,
                     isDualTarget = isDualTarget,
                     modifier = contentRevealModifier,
+                    square = edithTileStyle,
+                    fixedSquareSize = edithSquareSize,
                 ) {
                     val iconProvider: Context.() -> Icon = { getTileIcon(icon = icon) }
                     if (iconOnly) {
-                        SmallTileContent(
-                            iconProvider = iconProvider,
-                            color = colors.icon,
-                            modifier =
-                                Modifier.align(Alignment.Center).bounceScale {
-                                    currentBounceableInfo.bounceable.iconBounceScale
-                                },
-                        )
+                        // Edith square tiles are smaller than the standard tile, so scale the icon
+                        // to the tile's actual size.
+                        if (edithTileStyle) {
+                            BoxWithConstraints(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                val iconSize = min(maxWidth, maxHeight) * EdithIconRatio
+                                SmallTileContent(
+                                    iconProvider = iconProvider,
+                                    color = colors.icon,
+                                    size = { iconSize },
+                                    modifier =
+                                        Modifier.bounceScale {
+                                            currentBounceableInfo.bounceable.iconBounceScale
+                                        },
+                                )
+                            }
+                        } else {
+                            SmallTileContent(
+                                iconProvider = iconProvider,
+                                color = colors.icon,
+                                modifier =
+                                    Modifier.align(Alignment.Center).bounceScale {
+                                        currentBounceableInfo.bounceable.iconBounceScale
+                                    },
+                            )
+                        }
                     } else {
                         val iconShape by TileDefaults.animateIconShapeAsState(uiState)
                         val secondaryClick: (() -> Unit)? =
@@ -389,13 +444,23 @@ fun TileContainer(
     isDualTarget: Boolean,
     interactionSource: MutableInteractionSource?,
     modifier: Modifier = Modifier,
+    square: Boolean = false,
+    fixedSquareSize: Dp? = null,
     content: @Composable BoxScope.() -> Unit,
 ) {
     Box(
         modifier =
             modifier
-                .height(TileHeight)
-                .fillMaxWidth()
+                .then(
+                    when {
+                        // Fixed square size (Edith): a fixed height unaffected by the bounce
+                        // animation that changes the tile's width on tap.
+                        fixedSquareSize != null ->
+                            Modifier.height(fixedSquareSize).fillMaxWidth()
+                        square -> Modifier.fillMaxWidth().aspectRatio(1f)
+                        else -> Modifier.height(TileHeight).fillMaxWidth()
+                    }
+                )
                 .tileCombinedClickable(
                     onClick = onClick ?: {},
                     onLongClick = onLongClick,
@@ -414,22 +479,49 @@ fun SmallStaticTile(
     uiState: TileUiState,
     iconProvider: IconProvider,
     modifier: Modifier = Modifier,
+    edithTileStyle: Boolean = false,
     onClick: () -> Unit = {},
 ) {
     val colors = TileDefaults.getColorForState(uiState = uiState, iconOnly = true)
+    val shape =
+        if (edithTileStyle) {
+            RoundedCornerShape(percent = 50)
+        } else {
+            TileDefaults.animateTileShapeAsState(uiState).value
+        }
 
     Box(
         modifier
-            .clip(TileDefaults.animateTileShapeAsState(uiState).value)
+            .clip(shape)
             .background(colors.background)
-            .size(TileHeight)
+            .then(
+                if (edithTileStyle) {
+                    Modifier.fillMaxWidth().aspectRatio(1f)
+                } else {
+                    Modifier.size(TileHeight)
+                }
+            )
             .clickable(onClick = onClick)
     ) {
-        SmallTileContent(
-            iconProvider = { getTileIcon(icon = iconProvider) },
-            color = colors.icon,
-            modifier = Modifier.align(Alignment.Center),
-        )
+        if (edithTileStyle) {
+            BoxWithConstraints(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+                val iconSize = min(maxWidth, maxHeight) * EdithIconRatio
+                SmallTileContent(
+                    iconProvider = { getTileIcon(icon = iconProvider) },
+                    color = colors.icon,
+                    size = { iconSize },
+                )
+            }
+        } else {
+            SmallTileContent(
+                iconProvider = { getTileIcon(icon = iconProvider) },
+                color = colors.icon,
+                modifier = Modifier.align(Alignment.Center),
+            )
+        }
     }
 }
 
@@ -524,6 +616,15 @@ data class TileColors(
 object TileMotionTestKeys {
     val Squishness = MotionTestValueKey<Float>("tile_squishiness")
 }
+
+/**
+ * Fraction of the (square) Edith tile occupied by the icon. The Edith tiles are smaller than the
+ * standard tile, so the icon scales with the tile size instead of using a fixed dimension.
+ */
+private const val EdithIconRatio = 0.38f
+
+/** Corner radius of the active (squircle) Edith tile. */
+private val EdithActiveCornerRadius = 16.dp
 
 private object TileDefaults {
     /** An active tile uses the active color as background */

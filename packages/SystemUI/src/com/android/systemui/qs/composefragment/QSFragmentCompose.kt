@@ -736,6 +736,7 @@ constructor(
                         QuickQuickSettings(
                             viewModel = viewModel.quickQuickSettingsViewModel,
                             listening = isListening,
+                            edithTileStyle = viewModel.edithStyleEnabled,
                         )
                     }
                 val Media =

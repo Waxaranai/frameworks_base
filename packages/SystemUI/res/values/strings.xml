@@ -3149,6 +3149,8 @@
 
     <!-- Title for the QS tiles zone on the edit landing screen [CHAR LIMIT=30] -->
     <string name="quick_settings_edit_qs_tiles_title">Quick Settings tiles</string>
+    <!-- Title for the toggles & shortcuts zone on the edit landing screen [CHAR LIMIT=30] -->
+    <string name="quick_settings_edit_toggles_shortcuts_title">Toggles &amp; Shortcuts</string>
 
     <!-- Button to open the tile picker for Quick Actions [CHAR LIMIT=30] -->
     <string name="quick_settings_edit_quick_actions_add">Add tile</string>

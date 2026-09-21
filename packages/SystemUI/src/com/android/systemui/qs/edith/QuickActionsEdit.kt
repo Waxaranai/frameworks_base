@@ -40,7 +40,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.outlined.AddCircleOutline
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -61,7 +61,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -80,6 +79,7 @@ import com.android.systemui.qs.panels.ui.compose.infinitegrid.TopBarSubtitle
 import com.android.systemui.qs.panels.ui.compose.selection.rememberSelectionState
 import com.android.systemui.qs.panels.ui.viewmodel.EditTopBarActionViewModel
 import com.android.systemui.qs.panels.ui.viewmodel.QuickActionsGridViewModel
+import com.android.systemui.qs.panels.ui.viewmodel.QSColumnsViewModel
 import com.android.systemui.qs.panels.ui.viewmodel.TileViewModel
 import com.android.systemui.qs.pipeline.shared.TileSpec
 import com.android.systemui.res.R
@@ -211,10 +211,8 @@ fun QuickActionsEdit(
                         listState.dragType == DragType.Move,
                 canLayoutTile = true,
                 onEditAction = onEditAction,
-                availableColumns =
-                    LocalResources.current.getInteger(
-                        R.integer.quick_settings_infinite_grid_num_columns
-                    ),
+                availableColumns = QSColumnsViewModel.EDITH_COLUMNS,
+                edithTileStyle = true,
             )
         }
     }
@@ -272,7 +270,7 @@ fun ContentScope.EdithEditLanding(
             }
 
             EditSectionCard(
-                title = stringResource(R.string.quick_settings_edit_qs_tiles_title),
+                title = stringResource(R.string.quick_settings_edit_toggles_shortcuts_title),
                 onAdd = onEditQsTiles,
             ) {
                 if (qsTiles.isEmpty()) {
@@ -280,7 +278,7 @@ fun ContentScope.EdithEditLanding(
                 } else {
                     RealTilePreview(
                         tiles = qsTiles,
-                        columns = QS_PREVIEW_COLUMNS,
+                        columns = QSColumnsViewModel.EDITH_COLUMNS,
                         iconOnly = true,
                     )
                 }
@@ -356,7 +354,7 @@ private fun EditSectionCard(
         ) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.weight(1f),
             )
@@ -367,7 +365,7 @@ private fun EditSectionCard(
                 modifier = Modifier.height(32.dp),
             ) {
                 Icon(
-                    Icons.Default.Add,
+                    Icons.Outlined.AddCircleOutline,
                     contentDescription = stringResource(
                         R.string.quick_settings_edit_quick_actions_add
                     ),
@@ -390,7 +388,6 @@ private fun EditSectionCard(
     }
 }
 
-private const val QS_PREVIEW_COLUMNS = 4
 private const val MIN_QUICK_ACTION_TILES = 2
 
 @Composable

@@ -81,6 +81,7 @@ private fun StaticTilePreview(tile: TileViewModel, iconOnly: Boolean) {
             uiState = uiState,
             iconProvider = iconProvider,
             modifier = Modifier.fillMaxWidth(),
+            edithTileStyle = true,
         )
     } else {
         LargeStaticTile(

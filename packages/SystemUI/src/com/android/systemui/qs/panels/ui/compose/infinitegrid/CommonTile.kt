@@ -489,6 +489,9 @@ object CommonTileDefaults {
     val ChevronSize = 14.dp
     val TileEndPadding = 12.dp
     val TileArrangementPadding = 6.dp
+
+    /** Spacing between tiles for the Edith QS style (more air between the smaller square tiles). */
+    val EdithTileSpacing = 10.dp
     val TileLabelBlurWidth = 32.dp
     const val TILE_MARQUEE_ITERATIONS = 1
     const val TILE_INITIAL_DELAY_MILLIS = 2000

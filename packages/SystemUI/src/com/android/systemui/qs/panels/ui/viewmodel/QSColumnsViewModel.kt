@@ -50,7 +50,9 @@ constructor(
     private val edithStyleEnabled by edithQsStyleInteractor.isEnabled.hydratedStateOf()
 
     val columns by derivedStateOf {
-        if (mediaInRowInLandscapeViewModel?.shouldMediaShowInRow == true) {
+        if (edithStyleEnabled) {
+            EDITH_COLUMNS
+        } else if (mediaInRowInLandscapeViewModel?.shouldMediaShowInRow == true) {
             columnsWithoutMedia / 2
         } else {
             columnsWithoutMedia
@@ -94,5 +96,10 @@ constructor(
         fun create(mediaLocation: Int?, mediaUiBehavior: MediaUiBehavior?): QSColumnsViewModel
 
         fun createWithoutMediaTracking() = create(null, null)
+    }
+
+    companion object {
+        /** Number of columns for the Edith QS style (gives 5x2 = 10 tiles per page). */
+        const val EDITH_COLUMNS = 5
     }
 }
