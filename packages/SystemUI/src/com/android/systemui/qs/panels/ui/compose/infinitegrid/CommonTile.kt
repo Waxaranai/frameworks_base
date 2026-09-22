@@ -492,6 +492,12 @@ object CommonTileDefaults {
 
     /** Spacing between tiles for the Edith QS style (more air between the smaller square tiles). */
     val EdithTileSpacing = 10.dp
+
+    /**
+     * Opacity of the inactive Edith tile background, mirroring AOSP's `surfaceEffect1` (0.54) so the
+     * tile stays semi-transparent instead of a solid color.
+     */
+    const val EdithInactiveTileAlpha = 0.54f
     val TileLabelBlurWidth = 32.dp
     const val TILE_MARQUEE_ITERATIONS = 1
     const val TILE_INITIAL_DELAY_MILLIS = 2000

@@ -32,7 +32,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Box
@@ -99,6 +98,7 @@ import com.android.systemui.qs.panels.ui.compose.BounceableInfo
 import com.android.systemui.qs.panels.ui.compose.Tooltip
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.ActiveIconCornerRadius
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.ActiveTileCornerRadius
+import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.EdithInactiveTileAlpha
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.InactiveIconCornerRadius
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.InactiveTileCornerRadius
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.TileHeight
@@ -642,33 +642,25 @@ private val EdithActiveCornerRadius = 16.dp
 
 private object TileDefaults {
     /**
-     * Edith QS color scheme: the active (squircle) tile uses the tertiary color, the inactive
-     * (circle) tile uses the tertiary container color. Unavailable tiles are dimmed like the stock
-     * style instead of showing a solid color.
+     * Edith QS color scheme: the active (squircle) tile uses the tertiary dim background with the
+     * on-tertiary glyph, the inactive (circle) tile uses the on-tertiary background with the
+     * tertiary glyph. Unavailable tiles are dimmed like the stock style instead of showing a solid
+     * color.
+     *
+     * The on-tertiary glyph is required for the active tile because in dark mode the tertiary dim
+     * and tertiary container roles resolve to the same color (so a tertiary-container glyph would
+     * be invisible); on-tertiary keeps a usable contrast in both light and dark.
+     *
+     * The inactive background is kept semi-transparent ([EdithInactiveTileAlpha]), matching AOSP's
+     * surfaceEffect1, so the wallpaper shows through the tile as it does in the stock style.
+     *
+     * These roles are dynamic (theme-aware) but are not exposed on the Compose
+     * [MaterialTheme.colorScheme], so they are read from the platform
+     * `com.android.internal.R.color.materialColor*` resources (which resolve per light/dark).
      */
     @Composable
     @ReadOnlyComposable
     fun edithTertiaryTileColors(visualState: Int): TileColors {
-        val active = visualState == STATE_ACTIVE
-        val fg =
-            if (active) {
-                MaterialTheme.colorScheme.onTertiary
-            } else {
-                MaterialTheme.colorScheme.onTertiaryContainer
-            }
-        // Active uses tertiary, inactive uses the tertiary container color. In dark mode the two
-        // tones are very close, so the active tile uses a lighter accent (accent3_100).
-        val darkMode = isSystemInDarkTheme()
-        val bg =
-            if (active) {
-                if (darkMode) {
-                    Color(LocalContext.current.getColor(android.R.color.system_accent3_100))
-                } else {
-                    MaterialTheme.colorScheme.tertiary
-                }
-            } else {
-                MaterialTheme.colorScheme.tertiaryContainer
-            }
         if (visualState != STATE_INACTIVE && visualState != STATE_ACTIVE) {
             // Unavailable (e.g. STATE_UNAVAILABLE): a dimmed neutral surface with a still-visible
             // glyph, matching the default unavailable tile look.
@@ -682,6 +674,23 @@ private object TileDefaults {
                 icon = dimFg,
             )
         }
+        val context = LocalContext.current
+        val active = visualState == STATE_ACTIVE
+        val bg =
+            if (active) {
+                Color(context.getColor(com.android.internal.R.color.materialColorTertiaryDim))
+            } else {
+                // Inactive tiles stay semi-transparent like AOSP's surfaceEffect1 (0.54), keeping
+                // the Edith tertiary color.
+                Color(context.getColor(com.android.internal.R.color.materialColorOnTertiary))
+                    .copy(alpha = EdithInactiveTileAlpha)
+            }
+        val fg =
+            if (active) {
+                Color(context.getColor(com.android.internal.R.color.materialColorOnTertiary))
+            } else {
+                Color(context.getColor(com.android.internal.R.color.materialColorTertiary))
+            }
         return TileColors(
             background = bg,
             iconBackground = bg,

@@ -135,6 +135,7 @@ import androidx.compose.ui.layout.MeasureScope
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
@@ -178,8 +179,9 @@ import com.android.systemui.qs.panels.ui.compose.EditTileListState.Companion.INV
 import com.android.systemui.qs.panels.ui.compose.dragAndDropRemoveZone
 import com.android.systemui.qs.panels.ui.compose.dragAndDropTileList
 import com.android.systemui.qs.panels.ui.compose.dragAndDropTileSource
-import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.InactiveTileCornerRadius
+import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.EdithInactiveTileAlpha
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.EdithTileSpacing
+import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.InactiveTileCornerRadius
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.TileArrangementPadding
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.TileHeight
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.ToggleTargetSize
@@ -1643,17 +1645,26 @@ private object EditModeTileDefaults {
 
     /**
      * Edith QS color scheme for the editor tiles. The editor uses a single (circle) shape, so it
-     * uses the inactive tertiary container colors.
+     * uses the inactive tertiary colors: on-tertiary background with the tertiary glyph. These
+     * dynamic roles are read from the platform `com.android.internal.R.color.materialColor*`
+     * resources. The background is kept semi-transparent ([EdithInactiveTileAlpha]) to match the
+     * QS tiles (and AOSP's surfaceEffect1).
      */
     @Composable
-    fun edithTertiaryEditTileColors(@Suppress("UNUSED_PARAMETER") active: Boolean): TileColors =
-        TileColors(
-            background = MaterialTheme.colorScheme.tertiaryContainer,
-            iconBackground = MaterialTheme.colorScheme.tertiaryContainer,
-            label = MaterialTheme.colorScheme.onTertiaryContainer,
-            secondaryLabel = MaterialTheme.colorScheme.onTertiaryContainer,
-            icon = MaterialTheme.colorScheme.onTertiaryContainer,
+    fun edithTertiaryEditTileColors(@Suppress("UNUSED_PARAMETER") active: Boolean): TileColors {
+        val context = LocalContext.current
+        val bg =
+            Color(context.getColor(com.android.internal.R.color.materialColorOnTertiary))
+                .copy(alpha = EdithInactiveTileAlpha)
+        val fg = Color(context.getColor(com.android.internal.R.color.materialColorTertiary))
+        return TileColors(
+            background = bg,
+            iconBackground = bg,
+            label = fg,
+            secondaryLabel = fg,
+            icon = fg,
         )
+    }
 }
 
 private const val EDIT_MODE_ROOT_TEST_TAG = "EditModeRoot"
