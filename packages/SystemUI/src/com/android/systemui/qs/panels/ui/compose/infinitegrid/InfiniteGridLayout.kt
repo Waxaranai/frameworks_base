@@ -40,6 +40,7 @@ import com.android.systemui.grid.ui.compose.VerticalSpannedGrid
 import com.android.systemui.haptics.msdl.qs.TileHapticsViewModel
 import com.android.systemui.lifecycle.rememberViewModel
 import com.android.systemui.qs.edith.EdithQsStyleInteractor
+import com.android.systemui.qs.edith.EdithQsColorInteractor
 import com.android.systemui.qs.panels.shared.model.SizedTileImpl
 import com.android.systemui.qs.panels.ui.compose.EditTileListState
 import com.android.systemui.qs.panels.ui.compose.PaginatableGridLayout
@@ -70,6 +71,7 @@ constructor(
     private val textFeedbackContentViewModelFactory: TextFeedbackContentViewModel.Factory,
     private val tileHapticsViewModelFactory: TileHapticsViewModel.Factory,
     private val edithQsStyleInteractor: EdithQsStyleInteractor,
+    private val edithQsColorInteractor: EdithQsColorInteractor,
 ) : PaginatableGridLayout {
 
     @Composable
@@ -86,6 +88,7 @@ constructor(
 
         val context = LocalContext.current
         val edithStyleEnabled by edithQsStyleInteractor.isEnabled.collectAsStateWithLifecycle()
+        val edithColorEnabled by edithQsColorInteractor.isEnabled.collectAsStateWithLifecycle()
         val textFeedbackViewModel =
             rememberViewModel(traceName = "InfiniteGridLayout.TileGrid", key = context) {
                 textFeedbackContentViewModelFactory.create(context)
@@ -156,6 +159,7 @@ constructor(
                         requestToggleTextFeedback = textFeedbackViewModel::requestShowFeedback,
                         enableRevealEffect = enableRevealEffect,
                         edithTileStyle = edithStyleEnabled,
+                        edithColorEnabled = edithStyleEnabled && edithColorEnabled,
                         edithSquareSize = edithSquareSize,
                     )
                 }
@@ -193,6 +197,7 @@ constructor(
         val scrollState = rememberScrollState()
         val coroutineScope = rememberCoroutineScope()
         val edithStyleEnabled by edithQsStyleInteractor.isEnabled.collectAsStateWithLifecycle()
+        val edithColorEnabled by edithQsColorInteractor.isEnabled.collectAsStateWithLifecycle()
         val dialogDelegate =
             rememberViewModel("InfiniteGridLayout.EditTileGrid") {
                 viewModel.resetDialogDelegateFactory.create {
@@ -237,6 +242,7 @@ constructor(
             onStopEditing = onStopEditing,
             topBarActions = actions,
             edithTileStyle = edithStyleEnabled,
+            edithColorEnabled = edithStyleEnabled && edithColorEnabled,
         ) { action ->
             // Opening the dialog doesn't require a snapshot
             if (action != EditAction.ResetGrid) {

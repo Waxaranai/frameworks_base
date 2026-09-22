@@ -32,6 +32,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Box
@@ -62,6 +63,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.semantics.Role
@@ -156,6 +158,7 @@ fun ContentScope.Tile(
     detailsViewModel: DetailsViewModel?,
     enableRevealEffect: Boolean = false,
     edithTileStyle: Boolean = false,
+    edithColorEnabled: Boolean = false,
     edithSquareSize: Dp? = null,
 ) {
     trace(tile.traceName) {
@@ -178,7 +181,12 @@ fun ContentScope.Tile(
                 tile.state.collect { value = it.toIconProvider() }
             }
 
-        val colors = TileDefaults.getColorForState(uiState, iconOnly)
+        val colors =
+            if (edithTileStyle && edithColorEnabled) {
+                TileDefaults.edithTertiaryTileColors(uiState.visualState)
+            } else {
+                TileDefaults.getColorForState(uiState, iconOnly)
+            }
         val hapticsViewModel: TileHapticsViewModel =
             rememberViewModel(traceName = "TileHapticsViewModel") {
                 tileHapticsViewModelFactory.create(tile)
@@ -480,9 +488,15 @@ fun SmallStaticTile(
     iconProvider: IconProvider,
     modifier: Modifier = Modifier,
     edithTileStyle: Boolean = false,
+    edithColorEnabled: Boolean = false,
     onClick: () -> Unit = {},
 ) {
-    val colors = TileDefaults.getColorForState(uiState = uiState, iconOnly = true)
+    val colors =
+        if (edithTileStyle && edithColorEnabled) {
+            TileDefaults.edithTertiaryTileColors(uiState.visualState)
+        } else {
+            TileDefaults.getColorForState(uiState = uiState, iconOnly = true)
+        }
     val shape =
         if (edithTileStyle) {
             RoundedCornerShape(percent = 50)
@@ -627,6 +641,56 @@ private const val EdithIconRatio = 0.38f
 private val EdithActiveCornerRadius = 16.dp
 
 private object TileDefaults {
+    /**
+     * Edith QS color scheme: the active (squircle) tile uses the tertiary color, the inactive
+     * (circle) tile uses the tertiary container color. Unavailable tiles are dimmed like the stock
+     * style instead of showing a solid color.
+     */
+    @Composable
+    @ReadOnlyComposable
+    fun edithTertiaryTileColors(visualState: Int): TileColors {
+        val active = visualState == STATE_ACTIVE
+        val fg =
+            if (active) {
+                MaterialTheme.colorScheme.onTertiary
+            } else {
+                MaterialTheme.colorScheme.onTertiaryContainer
+            }
+        // Active uses tertiary, inactive uses the tertiary container color. In dark mode the two
+        // tones are very close, so the active tile uses a lighter accent (accent3_100).
+        val darkMode = isSystemInDarkTheme()
+        val bg =
+            if (active) {
+                if (darkMode) {
+                    Color(LocalContext.current.getColor(android.R.color.system_accent3_100))
+                } else {
+                    MaterialTheme.colorScheme.tertiary
+                }
+            } else {
+                MaterialTheme.colorScheme.tertiaryContainer
+            }
+        if (visualState != STATE_INACTIVE && visualState != STATE_ACTIVE) {
+            // Unavailable (e.g. STATE_UNAVAILABLE): a dimmed neutral surface with a still-visible
+            // glyph, matching the default unavailable tile look.
+            val dimBg = MaterialTheme.colorScheme.surface.copy(alpha = .18f)
+            val dimFg = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = .65f)
+            return TileColors(
+                background = dimBg,
+                iconBackground = dimBg,
+                label = dimFg,
+                secondaryLabel = dimFg,
+                icon = dimFg,
+            )
+        }
+        return TileColors(
+            background = bg,
+            iconBackground = bg,
+            label = fg,
+            secondaryLabel = fg,
+            icon = fg,
+        )
+    }
+
     /** An active tile uses the active color as background */
     @Composable
     @ReadOnlyComposable

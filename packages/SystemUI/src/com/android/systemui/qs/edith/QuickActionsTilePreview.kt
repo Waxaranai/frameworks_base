@@ -48,6 +48,7 @@ fun ContentScope.RealTilePreview(
     modifier: Modifier = Modifier,
     columns: Int = 2,
     iconOnly: Boolean = false,
+    edithColorEnabled: Boolean = false,
 ) {
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         tiles.chunked(columns).forEach { row ->
@@ -56,7 +57,9 @@ fun ContentScope.RealTilePreview(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 for (tile in row) {
-                    Box(modifier = Modifier.weight(1f)) { StaticTilePreview(tile, iconOnly) }
+                    Box(modifier = Modifier.weight(1f)) {
+                        StaticTilePreview(tile, iconOnly, edithColorEnabled)
+                    }
                 }
                 // Spacers for an incomplete row.
                 repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }
@@ -66,7 +69,11 @@ fun ContentScope.RealTilePreview(
 }
 
 @Composable
-private fun StaticTilePreview(tile: TileViewModel, iconOnly: Boolean) {
+private fun StaticTilePreview(
+    tile: TileViewModel,
+    iconOnly: Boolean,
+    edithColorEnabled: Boolean,
+) {
     val resources = LocalResources.current
     val uiState by
         produceState(tile.currentState.toUiState(resources), tile, resources) {
@@ -82,6 +89,7 @@ private fun StaticTilePreview(tile: TileViewModel, iconOnly: Boolean) {
             iconProvider = iconProvider,
             modifier = Modifier.fillMaxWidth(),
             edithTileStyle = true,
+            edithColorEnabled = edithColorEnabled,
         )
     } else {
         LargeStaticTile(

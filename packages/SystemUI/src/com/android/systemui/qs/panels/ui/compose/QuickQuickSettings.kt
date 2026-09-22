@@ -46,6 +46,7 @@ fun ContentScope.QuickQuickSettings(
     modifier: Modifier = Modifier,
     listening: () -> Boolean,
     edithTileStyle: Boolean = false,
+    edithColorEnabled: Boolean = false,
 ) {
     val columns = viewModel.columns
     val sizedTiles = viewModel.tileViewModels
@@ -102,6 +103,7 @@ fun ContentScope.QuickQuickSettings(
                         detailsViewModel = null,
                         isVisible = listening,
                         edithTileStyle = edithTileStyle,
+                        edithColorEnabled = edithColorEnabled,
                         edithSquareSize = edithSquareSize,
                     )
                 }

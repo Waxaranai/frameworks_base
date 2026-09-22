@@ -60,6 +60,7 @@ import com.android.systemui.qs.QSEvent
 import com.android.systemui.qs.composefragment.dagger.QSFragmentComposeLog
 import com.android.systemui.qs.composefragment.dagger.QSFragmentComposeModule
 import com.android.systemui.qs.edith.EdithQsStyleInteractor
+import com.android.systemui.qs.edith.EdithQsColorInteractor
 import com.android.systemui.qs.edith.QuickActionsEditViewModel
 import com.android.systemui.qs.footer.ui.viewmodel.FooterActionsViewModel
 import com.android.systemui.qs.panels.domain.interactor.TileSquishinessInteractor
@@ -108,6 +109,7 @@ constructor(
     val quickActionsGridViewModel: QuickActionsGridViewModel,
     val quickActionsEditViewModel: QuickActionsEditViewModel,
     private val edithQsStyleInteractor: EdithQsStyleInteractor,
+    private val edithQsColorInteractor: EdithQsColorInteractor,
     audioStreamSliderViewModelFactory: AudioStreamSliderViewModel.Factory,
     footerActionsViewModelFactory: FooterActionsViewModel.Factory,
     private val footerActionsController: FooterActionsController,
@@ -218,6 +220,14 @@ constructor(
             traceName = "edithStyleEnabled",
             initialValue = false,
             source = edithQsStyleInteractor.isEnabled,
+        )
+
+    /** Whether the Edith QS color scheme (tertiary tiles) is enabled. */
+    val edithColorEnabled by
+        hydrator.hydratedStateOf(
+            traceName = "edithColorEnabled",
+            initialValue = true,
+            source = edithQsColorInteractor.isEnabled,
         )
 
     val qqsBottomPadding by

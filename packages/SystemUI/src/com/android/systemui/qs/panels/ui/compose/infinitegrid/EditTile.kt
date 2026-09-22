@@ -253,6 +253,7 @@ fun DefaultEditTileGrid(
     scrollState: ScrollState = rememberScrollState(),
     onStopEditing: () -> Unit = {},
     edithTileStyle: Boolean = false,
+    edithColorEnabled: Boolean = false,
     onEditAction: (EditAction) -> Unit = {},
 ) {
     val selectionState = rememberSelectionState()
@@ -361,6 +362,7 @@ fun DefaultEditTileGrid(
                         selectionState = selectionState,
                         onEditAction = onEditAction,
                         edithTileStyle = edithTileStyle,
+                        edithColorEnabled = edithColorEnabled,
                     )
 
                     // Only show available tiles when a drag or placement isn't in progress, OR the
@@ -375,6 +377,7 @@ fun DefaultEditTileGrid(
                             !(listState.dragInProgress || selectionState.placementEnabled) ||
                                 listState.dragType == DragType.Move,
                         edithTileStyle = edithTileStyle,
+                        edithColorEnabled = edithColorEnabled,
                     )
                 }
             }
@@ -612,6 +615,7 @@ internal fun CurrentTilesGrid(
     onEditAction: (EditAction) -> Unit,
     labelTiles: Boolean = false,
     edithTileStyle: Boolean = false,
+    edithColorEnabled: Boolean = false,
 ) {
     val currentListState by rememberUpdatedState(listState)
     val spacing = if (edithTileStyle) EdithTileSpacing else TileArrangementPadding
@@ -631,6 +635,7 @@ internal fun CurrentTilesGrid(
             onEditAction = onEditAction,
             labelTiles = labelTiles,
             edithTileStyle = edithTileStyle,
+            edithColorEnabled = edithColorEnabled,
             tileSize = tileSize,
             spacing = spacing,
         )
@@ -644,6 +649,7 @@ private fun CurrentTilesGridContent(
     onEditAction: (EditAction) -> Unit,
     labelTiles: Boolean,
     edithTileStyle: Boolean,
+    edithColorEnabled: Boolean,
     tileSize: Dp,
     spacing: Dp,
 ) {
@@ -699,6 +705,7 @@ private fun CurrentTilesGridContent(
             onRemoveTile = { onEditAction(EditAction.RemoveTile(it)) },
             labelTiles = labelTiles,
             edithTileStyle = edithTileStyle,
+            edithColorEnabled = edithColorEnabled,
         ) { resizingOperation ->
             when (resizingOperation) {
                 is TemporaryResizeOperation -> {
@@ -751,6 +758,7 @@ internal fun AnimatedAvailableTilesGrid(
     modifier: Modifier = Modifier,
     availableColumns: Int = listState.columns,
     edithTileStyle: Boolean = false,
+    edithColorEnabled: Boolean = false,
 ) {
     // Sets a minimum height to be used when available tiles are hidden
     Box(
@@ -779,6 +787,7 @@ internal fun AnimatedAvailableTilesGrid(
                     { onEditAction(EditAction.AddTile(it)) }, // Add to the end
                     listState,
                     edithTileStyle = edithTileStyle,
+                    edithColorEnabled = edithColorEnabled,
                 )
 
                 TextButton(
@@ -809,6 +818,7 @@ private fun AvailableTileGrid(
     onAddTile: (TileSpec) -> Unit,
     dragAndDropState: DragAndDropState,
     edithTileStyle: Boolean = false,
+    edithColorEnabled: Boolean = false,
 ) {
     // Group and sort to get the proper order tiles should be displayed in
     val groupedTileSpecs =
@@ -874,6 +884,7 @@ private fun AvailableTileGrid(
                                         onAddTile = onAddTile,
                                         modifier = Modifier.weight(1f).fillMaxHeight(),
                                         edithTileStyle = edithTileStyle,
+                                        edithColorEnabled = edithColorEnabled,
                                     )
                                 }
                             }
@@ -914,6 +925,7 @@ fun LazyGridScope.EditTiles(
     onRemoveTile: (TileSpec) -> Unit,
     labelTiles: Boolean = false,
     edithTileStyle: Boolean = false,
+    edithColorEnabled: Boolean = false,
     onResize: (operation: ResizeOperation) -> Unit,
 ) {
     itemsIndexed(
@@ -954,6 +966,7 @@ fun LazyGridScope.EditTiles(
                         largeTilesSpan = listState.largeTilesSpan,
                         labelTiles = labelTiles,
                         edithTileStyle = edithTileStyle,
+                        edithColorEnabled = edithColorEnabled,
                     )
                 }
             is SpacerGridCell ->
@@ -994,6 +1007,7 @@ private fun LazyGridItemScope.TileGridCell(
     largeTilesSpan: Int,
     labelTiles: Boolean,
     edithTileStyle: Boolean,
+    edithColorEnabled: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val stateDescription = stringResource(id = R.string.accessibility_qs_edit_position, index + 1)
@@ -1043,7 +1057,12 @@ private fun LazyGridItemScope.TileGridCell(
             .collect { anchorsData = it }
     }
 
-    val colors = EditModeTileDefaults.editTileColors()
+    val colors =
+        if (edithTileStyle && edithColorEnabled) {
+            EditModeTileDefaults.edithTertiaryEditTileColors(active = false)
+        } else {
+            EditModeTileDefaults.editTileColors()
+        }
     val inactiveCorner = InactiveTileCornerRadius
     val toggleSizeLabel = stringResource(R.string.accessibility_qs_edit_toggle_tile_size_action)
     val togglePlacementModeLabel =
@@ -1266,13 +1285,19 @@ private fun AvailableTileGridCell(
     onAddTile: (TileSpec) -> Unit,
     modifier: Modifier = Modifier,
     edithTileStyle: Boolean = false,
+    edithColorEnabled: Boolean = false,
 ) {
     val stateDescription: String? =
         if (cell.isCurrent) stringResource(R.string.accessibility_qs_edit_tile_already_added)
         else null
 
     val alpha by animateFloatAsState(if (cell.isCurrent) .38f else 1f)
-    val colors = EditModeTileDefaults.editTileColors()
+    val colors =
+        if (edithTileStyle && edithColorEnabled) {
+            EditModeTileDefaults.edithTertiaryEditTileColors(active = false)
+        } else {
+            EditModeTileDefaults.editTileColors()
+        }
     val inactiveCorner = InactiveTileCornerRadius
     val onClick: () -> Unit = {
         onAddTile(cell.tileSpec)
@@ -1614,6 +1639,20 @@ private object EditModeTileDefaults {
             label = MaterialTheme.colorScheme.onSurface,
             secondaryLabel = MaterialTheme.colorScheme.onSurface,
             icon = MaterialTheme.colorScheme.onSurface,
+        )
+
+    /**
+     * Edith QS color scheme for the editor tiles. The editor uses a single (circle) shape, so it
+     * uses the inactive tertiary container colors.
+     */
+    @Composable
+    fun edithTertiaryEditTileColors(@Suppress("UNUSED_PARAMETER") active: Boolean): TileColors =
+        TileColors(
+            background = MaterialTheme.colorScheme.tertiaryContainer,
+            iconBackground = MaterialTheme.colorScheme.tertiaryContainer,
+            label = MaterialTheme.colorScheme.onTertiaryContainer,
+            secondaryLabel = MaterialTheme.colorScheme.onTertiaryContainer,
+            icon = MaterialTheme.colorScheme.onTertiaryContainer,
         )
 }
 

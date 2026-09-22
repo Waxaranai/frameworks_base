@@ -737,6 +737,8 @@ constructor(
                             viewModel = viewModel.quickQuickSettingsViewModel,
                             listening = isListening,
                             edithTileStyle = viewModel.edithStyleEnabled,
+                            edithColorEnabled =
+                                viewModel.edithStyleEnabled && viewModel.edithColorEnabled,
                         )
                     }
                 val Media =
@@ -1068,6 +1070,8 @@ constructor(
                         onReset = { quickActionsEditor.showResetDialog() },
                         onStopEditing = stopEditing,
                         modifier = editModifier,
+                        edithColorEnabled =
+                            viewModel.edithStyleEnabled && viewModel.edithColorEnabled,
                     )
                 }
             }

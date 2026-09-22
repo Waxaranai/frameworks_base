@@ -62,6 +62,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.compose.animation.scene.ContentScope
@@ -235,6 +236,7 @@ fun ContentScope.EdithEditLanding(
     onReset: () -> Unit,
     onStopEditing: () -> Unit,
     modifier: Modifier = Modifier,
+    edithColorEnabled: Boolean = false,
 ) {
     val quickActionTiles =
         quickActionsGridViewModel.tileViewModels(
@@ -280,6 +282,7 @@ fun ContentScope.EdithEditLanding(
                         tiles = qsTiles,
                         columns = QSColumnsViewModel.EDITH_COLUMNS,
                         iconOnly = true,
+                        edithColorEnabled = edithColorEnabled,
                     )
                 }
             }
@@ -355,21 +358,22 @@ private fun EditSectionCard(
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.weight(1f),
             )
             FilledTonalButton(
                 onClick = onAdd,
                 shape = RoundedCornerShape(percent = 50),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
-                modifier = Modifier.height(32.dp),
+                contentPadding = PaddingValues(horizontal = 22.dp, vertical = 0.dp),
+                modifier = Modifier.height(28.dp),
             ) {
                 Icon(
                     Icons.Outlined.AddCircleOutline,
                     contentDescription = stringResource(
                         R.string.quick_settings_edit_quick_actions_add
                     ),
-                    modifier = Modifier.size(18.dp),
+                    modifier = Modifier.size(24.dp),
                 )
             }
         }
