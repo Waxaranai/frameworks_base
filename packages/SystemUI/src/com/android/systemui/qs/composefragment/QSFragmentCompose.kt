@@ -788,6 +788,9 @@ constructor(
                                         viewModel = viewModel.quickActionsGridViewModel,
                                         modifier = Modifier.fillMaxWidth(),
                                         listening = isListening,
+                                        edithTileStyle = viewModel.edithStyleEnabled,
+                                        edithColorEnabled = viewModel.edithColorEnabled,
+                                        edithQuickActionsOverride = viewModel.edithQuickActionsOverride,
                                     )
                                 }
                             },
@@ -997,6 +1000,10 @@ constructor(
                                             viewModel = viewModel.quickActionsGridViewModel,
                                             modifier = Modifier.fillMaxWidth(),
                                             listening = isListening,
+                                            edithTileStyle = viewModel.edithStyleEnabled,
+                                            edithColorEnabled = viewModel.edithColorEnabled,
+                                            edithQuickActionsOverride =
+                                                viewModel.edithQuickActionsOverride,
                                         )
                                     }
                                 },

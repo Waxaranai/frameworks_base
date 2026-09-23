@@ -130,6 +130,7 @@ fun LargeTileContent(
     textScale: () -> Float = { 1f },
     toggleClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null,
+    innerBoxColor: Color? = null,
 ) {
     val isDualTarget = toggleClick != null
     Row(
@@ -139,8 +140,11 @@ fun LargeTileContent(
     ) {
         // Icon
         val longPressLabel = longPressLabelSettings().takeIf { onLongClick != null }
+        // The Edith Quick Actions dual-target tile draws its inner box with a derived color (the
+        // glyph color at low alpha) so the box is visible on top of the same-colored tile.
+        val targetBackground = innerBoxColor ?: colors.iconBackground
         val animatedBackgroundColor by
-            animateColorAsState(colors.iconBackground, label = "QSTileDualTargetBackgroundColor")
+            animateColorAsState(targetBackground, label = "QSTileDualTargetBackgroundColor")
         val focusBorderColor = MaterialTheme.colorScheme.secondary
         Box(
             modifier =

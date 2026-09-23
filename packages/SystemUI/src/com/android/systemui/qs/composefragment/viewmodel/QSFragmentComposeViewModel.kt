@@ -237,6 +237,16 @@ constructor(
             source = edithQsColorInteractor.tileColorOverride,
         )
 
+    /**
+     * Quick Actions color + dual-target shape overrides from the (debug) tuner, or `null` for the
+     * defaults.
+     */
+    val edithQuickActionsOverride by
+        hydrator.hydratedStateOf(
+            traceName = "edithQuickActionsOverride",
+            source = edithQsColorInteractor.quickActionsTileOverride,
+        )
+
     val qqsBottomPadding by
         hydrator.hydratedStateOf(
             traceName = "qqsBottomPadding",

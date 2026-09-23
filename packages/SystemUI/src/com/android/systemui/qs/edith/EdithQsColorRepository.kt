@@ -88,6 +88,58 @@ constructor(
             .distinctUntilChanged()
             .flowOn(backgroundDispatcher)
 
+    // --- Quick Actions scope -------------------------------------------------
+
+    /** Quick Actions per-slot color overrides (swatch tags), or [UNSET]. */
+    val quickActionsActiveBg: Flow<String> =
+        secureSettingsRepository
+            .stringSetting(QA_COLOR_ACTIVE_BG, defaultValue = UNSET)
+            .map { it ?: UNSET }
+            .distinctUntilChanged()
+            .flowOn(backgroundDispatcher)
+
+    val quickActionsActiveFg: Flow<String> =
+        secureSettingsRepository
+            .stringSetting(QA_COLOR_ACTIVE_FG, defaultValue = UNSET)
+            .map { it ?: UNSET }
+            .distinctUntilChanged()
+            .flowOn(backgroundDispatcher)
+
+    val quickActionsInactiveBg: Flow<String> =
+        secureSettingsRepository
+            .stringSetting(QA_COLOR_INACTIVE_BG, defaultValue = UNSET)
+            .map { it ?: UNSET }
+            .distinctUntilChanged()
+            .flowOn(backgroundDispatcher)
+
+    val quickActionsInactiveFg: Flow<String> =
+        secureSettingsRepository
+            .stringSetting(QA_COLOR_INACTIVE_FG, defaultValue = UNSET)
+            .map { it ?: UNSET }
+            .distinctUntilChanged()
+            .flowOn(backgroundDispatcher)
+
+    /** Alpha (0-100) for the Quick Actions inactive background, or [UNSET_INT]. */
+    val quickActionsInactiveAlpha: Flow<Int> =
+        secureSettingsRepository
+            .intSetting(QA_COLOR_INACTIVE_ALPHA, defaultValue = UNSET_INT)
+            .distinctUntilChanged()
+            .flowOn(backgroundDispatcher)
+
+    /** Dual-target outer box corner radius (dp), or [UNSET_INT]. */
+    val quickActionsShapeOuter: Flow<Int> =
+        secureSettingsRepository
+            .intSetting(QA_SHAPE_OUTER, defaultValue = UNSET_INT)
+            .distinctUntilChanged()
+            .flowOn(backgroundDispatcher)
+
+    /** Dual-target inner toggle-target box corner radius (dp), or [UNSET_INT]. */
+    val quickActionsShapeInner: Flow<Int> =
+        secureSettingsRepository
+            .intSetting(QA_SHAPE_INNER, defaultValue = UNSET_INT)
+            .distinctUntilChanged()
+            .flowOn(backgroundDispatcher)
+
     companion object {
         /**
          * [Settings.Secure] key for the Edith QS color scheme. Referenced as a string (rather
@@ -108,5 +160,15 @@ constructor(
         const val COLOR_INACTIVE_BG = "edith_qs_tile_color_inactive_bg"
         const val COLOR_INACTIVE_FG = "edith_qs_tile_color_inactive_fg"
         const val COLOR_INACTIVE_ALPHA = "edith_qs_tile_color_inactive_alpha"
+
+        /** [Settings.Secure] keys for the Quick Actions scope (colors + dual-target shapes). */
+        const val QA_COLOR_ACTIVE_BG = "edith_qa_tile_color_active_bg"
+
+        const val QA_COLOR_ACTIVE_FG = "edith_qa_tile_color_active_fg"
+        const val QA_COLOR_INACTIVE_BG = "edith_qa_tile_color_inactive_bg"
+        const val QA_COLOR_INACTIVE_FG = "edith_qa_tile_color_inactive_fg"
+        const val QA_COLOR_INACTIVE_ALPHA = "edith_qa_tile_color_inactive_alpha"
+        const val QA_SHAPE_OUTER = "edith_qa_tile_shape_outer"
+        const val QA_SHAPE_INNER = "edith_qa_tile_shape_inner"
     }
 }

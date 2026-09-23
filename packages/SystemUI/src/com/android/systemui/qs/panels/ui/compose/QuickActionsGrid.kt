@@ -29,6 +29,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.compose.animation.scene.ContentScope
 import com.android.systemui.compose.modifiers.sysuiResTag
 import com.android.systemui.grid.ui.compose.VerticalSpannedGrid
+import com.android.systemui.qs.edith.QuickActionsTileOverride
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.Tile
 import com.android.systemui.qs.panels.ui.viewmodel.BounceableTileViewModel
 import com.android.systemui.qs.panels.ui.viewmodel.QuickActionsGridViewModel
@@ -46,6 +47,9 @@ fun ContentScope.QuickActionsGrid(
     viewModel: QuickActionsGridViewModel,
     modifier: Modifier = Modifier,
     listening: () -> Boolean,
+    edithTileStyle: Boolean = false,
+    edithColorEnabled: Boolean = false,
+    edithQuickActionsOverride: QuickActionsTileOverride? = null,
 ) {
     val columns = COLUMNS
     val specs by viewModel.specs.collectAsStateWithLifecycle()
@@ -88,6 +92,11 @@ fun ContentScope.QuickActionsGrid(
                     // There is no details view for the fixed Quick Actions grid.
                     detailsViewModel = null,
                     isVisible = listening,
+                    edithTileStyle = edithTileStyle,
+                    edithColorEnabled = edithColorEnabled && edithTileStyle,
+                    edithQuickActionsTile = edithTileStyle,
+                    // Carries both the color overrides and the dual-target shape overrides.
+                    edithQuickActionsOverride = edithQuickActionsOverride.takeIf { edithTileStyle },
                 )
             }
         }
