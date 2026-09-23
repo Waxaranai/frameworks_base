@@ -135,6 +135,7 @@ import androidx.compose.ui.layout.MeasureScope
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.dimensionResource
@@ -1645,18 +1646,21 @@ private object EditModeTileDefaults {
 
     /**
      * Edith QS color scheme for the editor tiles. The editor uses a single (circle) shape, so it
-     * uses the inactive tertiary colors: on-tertiary background with the tertiary glyph. These
-     * dynamic roles are read from the platform `com.android.internal.R.color.materialColor*`
-     * resources. The background is kept semi-transparent ([EdithInactiveTileAlpha]) to match the
-     * QS tiles (and AOSP's surfaceEffect1).
+     * uses the inactive tile colors (per-theme `edith_qs_tile_inactive_*` resources), with the
+     * background kept semi-transparent ([EdithInactiveTileAlpha]) to match the QS tiles.
      */
     @Composable
     fun edithTertiaryEditTileColors(@Suppress("UNUSED_PARAMETER") active: Boolean): TileColors {
         val context = LocalContext.current
-        val bg =
-            Color(context.getColor(com.android.internal.R.color.materialColorOnTertiary))
-                .copy(alpha = EdithInactiveTileAlpha)
-        val fg = Color(context.getColor(com.android.internal.R.color.materialColorTertiary))
+        // Read the config so the colors are re-resolved when the theme changes (ThemePicker).
+        val assetsSeq = LocalConfiguration.current.assetsSeq
+        val resolved =
+            remember(context, assetsSeq) {
+                context.getColor(R.color.edith_qs_tile_inactive_bg) to
+                    context.getColor(R.color.edith_qs_tile_inactive_icon)
+            }
+        val bg = Color(resolved.first).copy(alpha = EdithInactiveTileAlpha)
+        val fg = Color(resolved.second)
         return TileColors(
             background = bg,
             iconBackground = bg,

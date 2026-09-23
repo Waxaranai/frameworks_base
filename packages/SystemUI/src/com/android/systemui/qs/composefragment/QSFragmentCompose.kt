@@ -739,6 +739,10 @@ constructor(
                             edithTileStyle = viewModel.edithStyleEnabled,
                             edithColorEnabled =
                                 viewModel.edithStyleEnabled && viewModel.edithColorEnabled,
+                            edithTileColorOverride =
+                                viewModel.edithTileColorOverride.takeIf {
+                                    viewModel.edithStyleEnabled && viewModel.edithColorEnabled
+                                },
                         )
                     }
                 val Media =

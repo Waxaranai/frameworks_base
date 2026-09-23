@@ -25,6 +25,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 
 /**
  * Repository for the Edith Quick Settings color scheme toggle.
@@ -47,11 +48,65 @@ constructor(
             .distinctUntilChanged()
             .flowOn(backgroundDispatcher)
 
+    /**
+     * Per-slot color overrides for the Edith tertiary tile scheme, set from the (debug) color tuner
+     * in Settings. Each value is a swatch tag (see [EdithTileSwatches]), or [UNSET] when the slot is
+     * not overridden. Storing a tag (not a resolved color) lets the tile re-resolve the theme color.
+     */
+    val tileColorActiveBg: Flow<String> =
+        secureSettingsRepository
+            .stringSetting(COLOR_ACTIVE_BG, defaultValue = UNSET)
+            .map { it ?: UNSET }
+            .distinctUntilChanged()
+            .flowOn(backgroundDispatcher)
+
+    val tileColorActiveFg: Flow<String> =
+        secureSettingsRepository
+            .stringSetting(COLOR_ACTIVE_FG, defaultValue = UNSET)
+            .map { it ?: UNSET }
+            .distinctUntilChanged()
+            .flowOn(backgroundDispatcher)
+
+    val tileColorInactiveBg: Flow<String> =
+        secureSettingsRepository
+            .stringSetting(COLOR_INACTIVE_BG, defaultValue = UNSET)
+            .map { it ?: UNSET }
+            .distinctUntilChanged()
+            .flowOn(backgroundDispatcher)
+
+    val tileColorInactiveFg: Flow<String> =
+        secureSettingsRepository
+            .stringSetting(COLOR_INACTIVE_FG, defaultValue = UNSET)
+            .map { it ?: UNSET }
+            .distinctUntilChanged()
+            .flowOn(backgroundDispatcher)
+
+    /** Alpha (0-100) for the inactive background, or [UNSET_INT]. */
+    val tileColorInactiveAlpha: Flow<Int> =
+        secureSettingsRepository
+            .intSetting(COLOR_INACTIVE_ALPHA, defaultValue = UNSET_INT)
+            .distinctUntilChanged()
+            .flowOn(backgroundDispatcher)
+
     companion object {
         /**
          * [Settings.Secure] key for the Edith QS color scheme. Referenced as a string (rather
          * than a framework constant) so this can ship as a SystemUI-only change.
          */
         const val SETTING_NAME = "edith_use_qs_color_scheme"
+
+        /** Sentinel meaning "this color slot is not overridden" (string slot). */
+        const val UNSET = ""
+
+        /** Sentinel meaning "this numeric slot is not overridden". */
+        const val UNSET_INT = -1
+
+        /** [Settings.Secure] keys for the (debug) Edith tile color tuner overrides. */
+        const val COLOR_ACTIVE_BG = "edith_qs_tile_color_active_bg"
+
+        const val COLOR_ACTIVE_FG = "edith_qs_tile_color_active_fg"
+        const val COLOR_INACTIVE_BG = "edith_qs_tile_color_inactive_bg"
+        const val COLOR_INACTIVE_FG = "edith_qs_tile_color_inactive_fg"
+        const val COLOR_INACTIVE_ALPHA = "edith_qs_tile_color_inactive_alpha"
     }
 }

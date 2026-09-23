@@ -33,6 +33,7 @@ import com.android.compose.animation.scene.ContentScope
 import com.android.systemui.compose.modifiers.sysuiResTag
 import com.android.systemui.grid.ui.compose.VerticalSpannedGrid
 import com.android.systemui.qs.composefragment.ui.GridAnchor
+import com.android.systemui.qs.edith.EdithTileColorOverride
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.EdithTileSpacing
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.Tile
 import com.android.systemui.qs.panels.ui.viewmodel.BounceableTileViewModel
@@ -47,6 +48,7 @@ fun ContentScope.QuickQuickSettings(
     listening: () -> Boolean,
     edithTileStyle: Boolean = false,
     edithColorEnabled: Boolean = false,
+    edithTileColorOverride: EdithTileColorOverride? = null,
 ) {
     val columns = viewModel.columns
     val sizedTiles = viewModel.tileViewModels
@@ -105,6 +107,7 @@ fun ContentScope.QuickQuickSettings(
                         edithTileStyle = edithTileStyle,
                         edithColorEnabled = edithColorEnabled,
                         edithSquareSize = edithSquareSize,
+                        edithTileColorOverride = edithTileColorOverride,
                     )
                 }
             }

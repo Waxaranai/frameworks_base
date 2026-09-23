@@ -94,6 +94,8 @@ import com.android.systemui.compose.modifiers.sysuiResTag
 import com.android.systemui.haptics.msdl.qs.TileHapticsViewModel
 import com.android.systemui.lifecycle.rememberViewModel
 import com.android.systemui.qs.flags.QsDetailedView
+import com.android.systemui.qs.edith.EdithTileColorOverride
+import com.android.systemui.qs.edith.EdithTileSwatches
 import com.android.systemui.qs.panels.ui.compose.BounceableInfo
 import com.android.systemui.qs.panels.ui.compose.Tooltip
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.ActiveIconCornerRadius
@@ -160,6 +162,7 @@ fun ContentScope.Tile(
     edithTileStyle: Boolean = false,
     edithColorEnabled: Boolean = false,
     edithSquareSize: Dp? = null,
+    edithTileColorOverride: EdithTileColorOverride? = null,
 ) {
     trace(tile.traceName) {
         val currentBounceableInfo by rememberUpdatedState(bounceableInfo)
@@ -183,7 +186,7 @@ fun ContentScope.Tile(
 
         val colors =
             if (edithTileStyle && edithColorEnabled) {
-                TileDefaults.edithTertiaryTileColors(uiState.visualState)
+                TileDefaults.edithTertiaryTileColors(uiState.visualState, edithTileColorOverride)
             } else {
                 TileDefaults.getColorForState(uiState, iconOnly)
             }
@@ -489,11 +492,12 @@ fun SmallStaticTile(
     modifier: Modifier = Modifier,
     edithTileStyle: Boolean = false,
     edithColorEnabled: Boolean = false,
+    edithTileColorOverride: EdithTileColorOverride? = null,
     onClick: () -> Unit = {},
 ) {
     val colors =
         if (edithTileStyle && edithColorEnabled) {
-            TileDefaults.edithTertiaryTileColors(uiState.visualState)
+            TileDefaults.edithTertiaryTileColors(uiState.visualState, edithTileColorOverride)
         } else {
             TileDefaults.getColorForState(uiState = uiState, iconOnly = true)
         }
@@ -642,25 +646,25 @@ private val EdithActiveCornerRadius = 16.dp
 
 private object TileDefaults {
     /**
-     * Edith QS color scheme: the active (squircle) tile uses the tertiary dim background with the
-     * on-tertiary glyph, the inactive (circle) tile uses the on-tertiary background with the
-     * tertiary glyph. Unavailable tiles are dimmed like the stock style instead of showing a solid
-     * color.
+     * Default Edith QS tertiary tile colors, set per-theme via the `edith_qs_tile_*` color
+     * resources (different accent3 tones in `values`/`values-night`):
      *
-     * The on-tertiary glyph is required for the active tile because in dark mode the tertiary dim
-     * and tertiary container roles resolve to the same color (so a tertiary-container glyph would
-     * be invisible); on-tertiary keeps a usable contrast in both light and dark.
+     *  - Dark:  active bg=a3_200, active icon=a3_800, inactive bg=a3_800, inactive icon=a3_100
+     *  - Light: active bg=a3_600, active icon=a3_50,  inactive bg=a3_10,  inactive icon=a3_700
      *
-     * The inactive background is kept semi-transparent ([EdithInactiveTileAlpha]), matching AOSP's
-     * surfaceEffect1, so the wallpaper shows through the tile as it does in the stock style.
+     * They alias `@android:color/system_accent3_*`, which are dynamic (theme-aware), so the tiles
+     * follow palette changes (wallpaper / ThemePicker). The inactive background is applied with
+     * [EdithInactiveTileAlpha], matching AOSP's surfaceEffect1, so the wallpaper shows through.
+     * Unavailable tiles use the stock dimmed look.
      *
-     * These roles are dynamic (theme-aware) but are not exposed on the Compose
-     * [MaterialTheme.colorScheme], so they are read from the platform
-     * `com.android.internal.R.color.materialColor*` resources (which resolve per light/dark).
+     * @param edithTileColorOverride optional per-slot color overrides from the (debug) color tuner
+     *   in Settings; unset slots fall back to the resource defaults above.
      */
     @Composable
-    @ReadOnlyComposable
-    fun edithTertiaryTileColors(visualState: Int): TileColors {
+    fun edithTertiaryTileColors(
+        visualState: Int,
+        edithTileColorOverride: EdithTileColorOverride? = null,
+    ): TileColors {
         if (visualState != STATE_INACTIVE && visualState != STATE_ACTIVE) {
             // Unavailable (e.g. STATE_UNAVAILABLE): a dimmed neutral surface with a still-visible
             // glyph, matching the default unavailable tile look.
@@ -675,22 +679,34 @@ private object TileDefaults {
             )
         }
         val context = LocalContext.current
+        // Read the configuration (assetsSeq matches PlatformTheme) so the color resolution below is
+        // re-run when the theme changes, e.g. after picking new colors in ThemePicker. Without this,
+        // a set override would keep resolving to the previous seed's color.
+        val assetsSeq = LocalConfiguration.current.assetsSeq
         val active = visualState == STATE_ACTIVE
+        val inactiveAlpha = edithTileColorOverride?.inactiveAlpha ?: EdithInactiveTileAlpha
+
+        val defaultBgRes =
+            if (active) R.color.edith_qs_tile_active_bg else R.color.edith_qs_tile_inactive_bg
+        val defaultIconRes =
+            if (active) R.color.edith_qs_tile_active_icon else R.color.edith_qs_tile_inactive_icon
+
+        // The override holds a swatch tag; resolve it against the current theme so the tile still
+        // follows palette changes (wallpaper / ThemePicker). Keyed on assetsSeq so the resolved
+        // colors are recomputed when the theme changes.
+        val bgTag = edithTileColorOverride?.let { if (active) it.activeBg else it.inactiveBg }
+        val iconTag = edithTileColorOverride?.let { if (active) it.activeFg else it.inactiveFg }
+        val resolved =
+            remember(context, assetsSeq, bgTag, iconTag, defaultBgRes, defaultIconRes) {
+                val bgArgb =
+                    EdithTileSwatches.resolve(context, bgTag) ?: context.getColor(defaultBgRes)
+                val fgArgb =
+                    EdithTileSwatches.resolve(context, iconTag) ?: context.getColor(defaultIconRes)
+                bgArgb to fgArgb
+            }
         val bg =
-            if (active) {
-                Color(context.getColor(com.android.internal.R.color.materialColorTertiaryDim))
-            } else {
-                // Inactive tiles stay semi-transparent like AOSP's surfaceEffect1 (0.54), keeping
-                // the Edith tertiary color.
-                Color(context.getColor(com.android.internal.R.color.materialColorOnTertiary))
-                    .copy(alpha = EdithInactiveTileAlpha)
-            }
-        val fg =
-            if (active) {
-                Color(context.getColor(com.android.internal.R.color.materialColorOnTertiary))
-            } else {
-                Color(context.getColor(com.android.internal.R.color.materialColorTertiary))
-            }
+            Color(resolved.first).copy(alpha = if (active) 1f else inactiveAlpha)
+        val fg = Color(resolved.second)
         return TileColors(
             background = bg,
             iconBackground = bg,

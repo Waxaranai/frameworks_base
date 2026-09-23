@@ -230,6 +230,13 @@ constructor(
             source = edithQsColorInteractor.isEnabled,
         )
 
+    /** Per-slot tile color overrides from the (debug) tuner, or `null` for the defaults. */
+    val edithTileColorOverride by
+        hydrator.hydratedStateOf(
+            traceName = "edithTileColorOverride",
+            source = edithQsColorInteractor.tileColorOverride,
+        )
+
     val qqsBottomPadding by
         hydrator.hydratedStateOf(
             traceName = "qqsBottomPadding",

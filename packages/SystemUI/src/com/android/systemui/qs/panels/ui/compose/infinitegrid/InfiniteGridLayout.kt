@@ -89,6 +89,8 @@ constructor(
         val context = LocalContext.current
         val edithStyleEnabled by edithQsStyleInteractor.isEnabled.collectAsStateWithLifecycle()
         val edithColorEnabled by edithQsColorInteractor.isEnabled.collectAsStateWithLifecycle()
+        val edithTileColorOverride by
+            edithQsColorInteractor.tileColorOverride.collectAsStateWithLifecycle()
         val textFeedbackViewModel =
             rememberViewModel(traceName = "InfiniteGridLayout.TileGrid", key = context) {
                 textFeedbackContentViewModelFactory.create(context)
@@ -161,6 +163,8 @@ constructor(
                         edithTileStyle = edithStyleEnabled,
                         edithColorEnabled = edithStyleEnabled && edithColorEnabled,
                         edithSquareSize = edithSquareSize,
+                        edithTileColorOverride =
+                            edithTileColorOverride.takeIf { edithStyleEnabled && edithColorEnabled },
                     )
                 }
             }
