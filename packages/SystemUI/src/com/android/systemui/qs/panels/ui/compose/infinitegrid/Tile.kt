@@ -605,13 +605,16 @@ fun LargeStaticTile(
     uiState: TileUiState,
     iconProvider: IconProvider,
     modifier: Modifier = Modifier,
+    shape: Shape? = null,
+    dualTarget: Boolean = false,
+    innerShape: RoundedCornerShape = RoundedCornerShape(percent = 50),
     onClick: () -> Unit = {},
 ) {
     val colors = TileDefaults.getColorForState(uiState = uiState, iconOnly = false)
 
     Box(
         modifier
-            .clip(TileDefaults.animateTileShapeAsState(uiState).value)
+            .clip(shape ?: TileDefaults.animateTileShapeAsState(uiState).value)
             .background(colors.background)
             .height(TileHeight)
             .clickable(onClick = onClick)
@@ -624,6 +627,9 @@ fun LargeStaticTile(
             sideDrawable = null,
             colors = colors,
             squishiness = { 1f },
+            // Preview of a dual-target tile: show the inner box without any interaction.
+            showDualTargetBox = dualTarget,
+            iconShape = if (dualTarget) innerShape else RoundedCornerShape(percent = 50),
         )
     }
 }

@@ -267,6 +267,7 @@ fun ContentScope.EdithEditLanding(
                     RealTilePreview(
                         tiles = quickActionTiles,
                         columns = QuickActionsGridViewModel.COLUMNS,
+                        pillShapes = true,
                     )
                 }
             }

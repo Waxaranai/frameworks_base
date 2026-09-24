@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
@@ -49,6 +50,7 @@ fun ContentScope.RealTilePreview(
     columns: Int = 2,
     iconOnly: Boolean = false,
     edithColorEnabled: Boolean = false,
+    pillShapes: Boolean = false,
 ) {
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         tiles.chunked(columns).forEach { row ->
@@ -58,7 +60,7 @@ fun ContentScope.RealTilePreview(
             ) {
                 for (tile in row) {
                     Box(modifier = Modifier.weight(1f)) {
-                        StaticTilePreview(tile, iconOnly, edithColorEnabled)
+                        StaticTilePreview(tile, iconOnly, edithColorEnabled, pillShapes)
                     }
                 }
                 // Spacers for an incomplete row.
@@ -73,6 +75,7 @@ private fun StaticTilePreview(
     tile: TileViewModel,
     iconOnly: Boolean,
     edithColorEnabled: Boolean,
+    pillShapes: Boolean,
 ) {
     val resources = LocalResources.current
     val uiState by
@@ -96,6 +99,10 @@ private fun StaticTilePreview(
             uiState = uiState,
             iconProvider = iconProvider,
             modifier = Modifier.fillMaxWidth(),
+            // The Quick Actions preview is drawn as a pill for all states, matching the editor.
+            shape = if (pillShapes) RoundedCornerShape(percent = 50) else null,
+            dualTarget = pillShapes && uiState.handlesToggleClick,
+            innerShape = RoundedCornerShape(percent = 50),
         )
     }
 }
