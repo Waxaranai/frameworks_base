@@ -301,12 +301,12 @@ private fun Header(onReset: () -> Unit, onDone: () -> Unit) {
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
                 text = stringResource(R.string.qs_edit_tiles),
-                style = MaterialTheme.typography.headlineLarge,
+                style = MaterialTheme.typography.headlineLargeEmphasized,
                 color = MaterialTheme.colorScheme.onSurface,
             )
             Text(
                 text = stringResource(R.string.quick_settings_edit_subtitle),
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyMediumEmphasized,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
@@ -359,7 +359,7 @@ private fun EditSectionCard(
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.weight(1f),
             )
@@ -383,7 +383,7 @@ private fun EditSectionCard(
                 Modifier.fillMaxWidth()
                     .border(
                         width = 2.dp,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                         shape = RoundedCornerShape(24.dp),
                     )
                     .padding(12.dp)
