@@ -157,7 +157,9 @@ fun ContentScope.QuickSettingsContent(
         media =
             @Composable {
                 if (isAlwaysComposedContentVisible()) {
-                    Element(key = Media.Elements.MediaCarousel, modifier = Modifier) {
+                    // A dedicated element key so the expanded QS card cross-fades in place with the
+                    // QQS card (rather than being a shared element that changes style mid-transition).
+                    Element(key = Elements.ExpandedQuickSettingsMedia, modifier = Modifier) {
                         Media(
                             viewModelFactory = viewModel.mediaViewModelFactory,
                             presentationStyle =
@@ -183,14 +185,13 @@ fun ContentScope.QuickSettingsContent(
         mediaInRow = mediaInRow,
         modifier =
             modifier
-                .element(Elements.QuickSettingsContent)
                 .padding(horizontal = dimensionResource(id = R.dimen.qs_horizontal_margin))
                 .sysuiResTag("quick_settings_panel"),
     )
 }
 
 @Composable
-private fun QuickSettingsPanelLayout(
+private fun ContentScope.QuickSettingsPanelLayout(
     quickActions: @Composable () -> Unit,
     brightness: @Composable () -> Unit,
     volume: @Composable () -> Unit,
@@ -203,7 +204,7 @@ private fun QuickSettingsPanelLayout(
         Column(
             verticalArrangement = spacedBy(QuickSettingsShade.Dimensions.VerticalPadding),
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = modifier,
+            modifier = modifier.element(Elements.QuickSettingsContent),
         ) {
             quickActions()
             brightness()
@@ -222,10 +223,19 @@ private fun QuickSettingsPanelLayout(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = modifier,
         ) {
-            quickActions()
-            brightness()
-            volume()
-            tiles()
+            // The media card is a sibling of the (fade-gated) QS content so it can cross-fade in
+            // place with the QQS card during the Shade<->QS transition instead of being gated by
+            // the late QuickSettingsContent fade.
+            Column(
+                verticalArrangement = spacedBy(QuickSettingsShade.Dimensions.VerticalPadding),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.element(Elements.QuickSettingsContent),
+            ) {
+                quickActions()
+                brightness()
+                volume()
+                tiles()
+            }
             media()
         }
     }

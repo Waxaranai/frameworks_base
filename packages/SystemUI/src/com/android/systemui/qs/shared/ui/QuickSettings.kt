@@ -70,6 +70,16 @@ object QuickSettings {
          */
         val QuickQuickSettingsCompactMedia = ElementKey("QuickQuickSettingsCompactMedia")
 
+        /**
+         * Element key for the media carousel in the expanded QS panel.
+         *
+         * The QQS and expanded QS media cards sit in the same spot but use different presentation
+         * styles, so they cross-fade in place during the Shade<->QS transition instead of being
+         * treated as one shared element. Using a dedicated key for the expanded QS card lets the
+         * transition drive its fade independently.
+         */
+        val ExpandedQuickSettingsMedia = ElementKey("ExpandedQuickSettingsMedia")
+
         val SplitShadeQuickSettings = ElementKey("SplitShadeQuickSettings")
     }
 

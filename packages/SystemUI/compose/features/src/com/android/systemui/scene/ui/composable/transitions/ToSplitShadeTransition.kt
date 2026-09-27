@@ -19,7 +19,6 @@ package com.android.systemui.scene.ui.composable.transitions
 import androidx.compose.animation.core.tween
 import com.android.compose.animation.scene.TransitionBuilder
 import com.android.compose.animation.scene.UserActionDistance
-import com.android.systemui.media.remedia.ui.compose.Media
 import com.android.systemui.notifications.ui.composable.Notifications
 import com.android.systemui.qs.shared.ui.QuickSettings
 import com.android.systemui.shade.ui.composable.Shade
@@ -36,7 +35,7 @@ fun TransitionBuilder.toSplitShadeTransition(durationScale: Double = 1.0) {
     fractionRange(end = .33f) { fade(Shade.Elements.BackgroundScrim) }
 
     fractionRange(start = .33f) {
-        fade(Media.Elements.MediaCarousel)
+        fade(QuickSettings.Elements.ExpandedQuickSettingsMedia)
         // Edith compact QQS media (dedicated key); no-op when the compact mode is off.
         fade(QuickSettings.Elements.QuickQuickSettingsCompactMedia)
         fade(ShadeHeader.Elements.Clock)

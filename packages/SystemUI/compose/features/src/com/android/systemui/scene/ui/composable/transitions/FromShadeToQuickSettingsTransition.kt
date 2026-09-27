@@ -13,6 +13,7 @@ import com.android.compose.animation.scene.transformation.offsetSharedElementWit
 import com.android.systemui.media.remedia.ui.compose.Media.Elements.MediaCarousel
 import com.android.systemui.notifications.ui.composable.Notifications
 import com.android.systemui.qs.shared.ui.QuickSettings.Elements
+import com.android.systemui.qs.shared.ui.QuickSettings.Elements.ExpandedQuickSettingsMedia
 import com.android.systemui.qs.shared.ui.QuickSettings.Elements.QuickQuickSettingsCompactMedia
 import com.android.systemui.qs.shared.ui.QuickSettings.SHARED_TILE_PICKER_THRESHOLD
 import com.android.systemui.scene.shared.model.Scenes
@@ -49,10 +50,16 @@ fun TransitionBuilder.shadeToQuickSettingsTransition(
     // overlap.
     fractionRange(end = 0.5f) { fade(QqsTileElementMatcher) }
     anchoredTranslate(QqsTileElementMatcher, Elements.GridAnchor)
-    fade(MediaCarousel)
-    // The Edith compact QQS media uses a dedicated element key so it is not a shared element with
-    // the expanded QS media. Fade it (a no-op when the compact mode is off).
-    fade(QuickQuickSettingsCompactMedia)
+    // The media card moves with the tiles (same anchor), cross-fading in sync with the pull: the
+    // QQS card fades out over the first half and the expanded QS card fades in over the second half.
+    // (The expanded QS media is a sibling of QuickSettingsContent, so it is not gated by that
+    // element's late fade.) Previously the media only faded and stayed pinned in place.
+    anchoredTranslate(ExpandedQuickSettingsMedia, Elements.GridAnchor)
+    anchoredTranslate(MediaCarousel, Elements.GridAnchor)
+    anchoredTranslate(QuickQuickSettingsCompactMedia, Elements.GridAnchor)
+    fractionRange(start = 0f, end = 0.5f) { fade(MediaCarousel) }
+    fractionRange(start = 0f, end = 0.5f) { fade(QuickQuickSettingsCompactMedia) }
+    fractionRange(start = 0.5f, end = 1f) { fade(ExpandedQuickSettingsMedia) }
 
     val translationY = ShadeHeader.Dimensions.CollapsedHeightForTransitions
     translate(ShadeHeader.Elements.CollapsedContentStart, y = translationY)
