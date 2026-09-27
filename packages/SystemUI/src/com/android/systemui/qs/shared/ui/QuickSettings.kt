@@ -56,6 +56,20 @@ object QuickSettings {
         val QuickActionsElementMatcher = ElementKey.withIdentity { it is QuickActionIdentity }
 
         val QuickQuickSettingsAndMedia = ElementKey("QuickQuickSettingsAndMedia")
+
+        /**
+         * Element key for the media carousel when shown in QQS with the Edith "compact media
+         * player" mode.
+         *
+         * The QQS media is normally the same element as the expanded QS media
+         * ([com.android.systemui.media.remedia.ui.compose.Media.Elements.MediaCarousel]) so the
+         * Shade<->QS transition animates it as one element. The compact QQS card uses a different
+         * presentation style than the expanded one, so sharing the key wedged that transition
+         * (the expanded QS could not be collapsed). Using a dedicated key makes it a separate
+         * element, leaving the stock path untouched.
+         */
+        val QuickQuickSettingsCompactMedia = ElementKey("QuickQuickSettingsCompactMedia")
+
         val SplitShadeQuickSettings = ElementKey("SplitShadeQuickSettings")
     }
 

@@ -13,6 +13,7 @@ import com.android.compose.animation.scene.transformation.offsetSharedElementWit
 import com.android.systemui.media.remedia.ui.compose.Media.Elements.MediaCarousel
 import com.android.systemui.notifications.ui.composable.Notifications
 import com.android.systemui.qs.shared.ui.QuickSettings.Elements
+import com.android.systemui.qs.shared.ui.QuickSettings.Elements.QuickQuickSettingsCompactMedia
 import com.android.systemui.qs.shared.ui.QuickSettings.SHARED_TILE_PICKER_THRESHOLD
 import com.android.systemui.scene.shared.model.Scenes
 import com.android.systemui.shade.ui.composable.ShadeHeader
@@ -49,6 +50,9 @@ fun TransitionBuilder.shadeToQuickSettingsTransition(
     fractionRange(end = 0.5f) { fade(QqsTileElementMatcher) }
     anchoredTranslate(QqsTileElementMatcher, Elements.GridAnchor)
     fade(MediaCarousel)
+    // The Edith compact QQS media uses a dedicated element key so it is not a shared element with
+    // the expanded QS media. Fade it (a no-op when the compact mode is off).
+    fade(QuickQuickSettingsCompactMedia)
 
     val translationY = ShadeHeader.Dimensions.CollapsedHeightForTransitions
     translate(ShadeHeader.Elements.CollapsedContentStart, y = translationY)
