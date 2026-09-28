@@ -47,11 +47,10 @@ fun TransitionBuilder.shadeToQuickSettingsTransition(
     // overlap.
     fractionRange(end = 0.5f) { fade(QqsTileElementMatcher) }
     anchoredTranslate(QqsTileElementMatcher, Elements.GridAnchor)
-    // The media card slides from its QQS position to its expanded QS position with the pull, like
-    // the tiles, via a shared element (same key in both scenes). The QQS copy fades out over the
-    // first half (like the QQS tiles) so the sliding card does not double up with the leaving one.
+    // The media card is a shared element that slides from its QQS position to its expanded QS
+    // position with the pull (like the tiles): a single placed copy morphs its position, so no fade
+    // is needed here.
     sharedElement(Elements.QuickSettingsMedia)
-    fractionRange(end = 0.5f) { fade(ShadeMediaElementMatcher) }
 
     val translationY = ShadeHeader.Dimensions.CollapsedHeightForTransitions
     translate(ShadeHeader.Elements.CollapsedContentStart, y = translationY)
@@ -102,13 +101,5 @@ private val QqsTileElementMatcher =
     object : ElementMatcher {
         override fun matches(key: ElementKey, content: ContentKey): Boolean {
             return content == Scenes.Shade && Elements.TileElementMatcher.matches(key, content)
-        }
-    }
-
-/** The media card as composed in the QQS (Shade) content. */
-private val ShadeMediaElementMatcher =
-    object : ElementMatcher {
-        override fun matches(key: ElementKey, content: ContentKey): Boolean {
-            return content == Scenes.Shade && key == Elements.QuickSettingsMedia
         }
     }

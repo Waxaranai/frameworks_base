@@ -62,18 +62,17 @@ object QuickSettings {
          * (the Shade scene) and the expanded QS panel so the card slides from its QQS position to
          * its expanded position with the pull (like the tiles).
          *
-         * The two cards can use different presentation styles (e.g. the Edith compact mode shows a
-         * two-row card in QQS and a three-row card in the expanded panel), which is why all copies
-         * are placed: each content renders its own style while the card still animates as one
-         * element. This keeps the stock shared-element (sliding) behaviour instead of the previous
-         * fade-only, pinned-in-place transition.
+         * This is a real shared element (one placed copy, morphing position) rather than
+         * placeAllCopies: with placeAllCopies each content drew its own static copy, so the card
+         * "slid" but the arriving copy popped in and the content looked gone. A single shared copy
+         * moves continuously from the QQS spot to the expanded spot. The content picker decides
+         * which scene's copy is drawn.
          */
         val QuickSettingsMedia =
             ElementKey(
                 "QuickSettingsMedia",
                 identity = QuickSettingsMediaIdentity,
                 contentPicker = SharedQsMediaContentPicker,
-                placeAllCopies = true,
             )
 
         val SplitShadeQuickSettings = ElementKey("SplitShadeQuickSettings")
