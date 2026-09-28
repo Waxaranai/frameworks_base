@@ -157,9 +157,9 @@ fun ContentScope.QuickSettingsContent(
         media =
             @Composable {
                 if (isAlwaysComposedContentVisible()) {
-                    // A dedicated element key so the expanded QS card cross-fades in place with the
-                    // QQS card (rather than being a shared element that changes style mid-transition).
-                    Element(key = Elements.ExpandedQuickSettingsMedia, modifier = Modifier) {
+                    // Shared element key with the QQS media, so the card slides from its QQS
+                    // position to its expanded position with the pull.
+                    Element(key = Elements.QuickSettingsMedia, modifier = Modifier) {
                         Media(
                             viewModelFactory = viewModel.mediaViewModelFactory,
                             presentationStyle =

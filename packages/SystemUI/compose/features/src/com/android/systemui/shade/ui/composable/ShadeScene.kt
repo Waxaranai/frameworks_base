@@ -440,16 +440,13 @@ private fun ContentScope.SingleShade(
                             if (viewModel.isQsEnabled && viewModel.showMedia) {
                                 val compactMediaInQs =
                                     viewModel.qsContainerViewModel.compactMediaInQs
-                                // The compact QQS card uses its own element key so it is not treated
-                                // as a shared element with the (different-styled) expanded QS media
-                                // during the Shade<->QS transition.
-                                val mediaElementKey =
-                                    if (compactMediaInQs) {
-                                        QuickSettings.Elements.QuickQuickSettingsCompactMedia
-                                    } else {
-                                        Media.Elements.MediaCarousel
-                                    }
-                                Element(key = mediaElementKey, modifier = Modifier) {
+                                // Shared with the expanded QS media (QuickSettingsMedia) so the card
+                                // slides from its QQS position to its expanded position with the
+                                // pull. The compact mode keeps its own style on each side.
+                                Element(
+                                    key = QuickSettings.Elements.QuickSettingsMedia,
+                                    modifier = Modifier,
+                                ) {
                                     Media(
                                         viewModelFactory = viewModel.mediaViewModelFactory,
                                         presentationStyle =

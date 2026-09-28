@@ -58,27 +58,23 @@ object QuickSettings {
         val QuickQuickSettingsAndMedia = ElementKey("QuickQuickSettingsAndMedia")
 
         /**
-         * Element key for the media carousel when shown in QQS with the Edith "compact media
-         * player" mode.
+         * Element key for the media carousel shown in the Quick Settings panel, shared between QQS
+         * (the Shade scene) and the expanded QS panel so the card slides from its QQS position to
+         * its expanded position with the pull (like the tiles).
          *
-         * The QQS media is normally the same element as the expanded QS media
-         * ([com.android.systemui.media.remedia.ui.compose.Media.Elements.MediaCarousel]) so the
-         * Shade<->QS transition animates it as one element. The compact QQS card uses a different
-         * presentation style than the expanded one, so sharing the key wedged that transition
-         * (the expanded QS could not be collapsed). Using a dedicated key makes it a separate
-         * element, leaving the stock path untouched.
+         * The two cards can use different presentation styles (e.g. the Edith compact mode shows a
+         * two-row card in QQS and a three-row card in the expanded panel), which is why all copies
+         * are placed: each content renders its own style while the card still animates as one
+         * element. This keeps the stock shared-element (sliding) behaviour instead of the previous
+         * fade-only, pinned-in-place transition.
          */
-        val QuickQuickSettingsCompactMedia = ElementKey("QuickQuickSettingsCompactMedia")
-
-        /**
-         * Element key for the media carousel in the expanded QS panel.
-         *
-         * The QQS and expanded QS media cards sit in the same spot but use different presentation
-         * styles, so they cross-fade in place during the Shade<->QS transition instead of being
-         * treated as one shared element. Using a dedicated key for the expanded QS card lets the
-         * transition drive its fade independently.
-         */
-        val ExpandedQuickSettingsMedia = ElementKey("ExpandedQuickSettingsMedia")
+        val QuickSettingsMedia =
+            ElementKey(
+                "QuickSettingsMedia",
+                identity = QuickSettingsMediaIdentity,
+                contentPicker = SharedQsMediaContentPicker,
+                placeAllCopies = true,
+            )
 
         val SplitShadeQuickSettings = ElementKey("SplitShadeQuickSettings")
     }
@@ -124,8 +120,36 @@ object QuickSettings {
             }
         }
     }
+
+    private object SharedQsMediaContentPicker : ElementContentPicker {
+        override fun contentDuringTransition(
+            element: ElementKey,
+            transition: TransitionState.Transition,
+            fromContentZIndex: Long,
+            toContentZIndex: Long,
+        ): ContentKey {
+            return when {
+                transition.isTransitioning(Shade, QuickSettings) &&
+                    transition.progress > 1f - SHARED_TILE_PICKER_THRESHOLD -> QuickSettings
+
+                transition.isTransitioning(QuickSettings, Shade) &&
+                    transition.progress < SHARED_TILE_PICKER_THRESHOLD -> QuickSettings
+
+                else ->
+                    HighestZIndexContentPicker.contentDuringTransition(
+                        element,
+                        transition,
+                        fromContentZIndex,
+                        toContentZIndex,
+                    )
+            }
+        }
+    }
 }
 
 private data class TileIdentity(val spec: TileSpec)
 
 private data class QuickActionIdentity(val spec: TileSpec)
+
+/** Stable identity for the single Quick Settings media card element. */
+private object QuickSettingsMediaIdentity

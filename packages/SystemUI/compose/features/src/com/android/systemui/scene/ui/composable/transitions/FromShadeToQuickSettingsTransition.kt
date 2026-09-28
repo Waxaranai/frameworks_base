@@ -10,11 +10,8 @@ import com.android.compose.animation.scene.ElementMatcher
 import com.android.compose.animation.scene.TransitionBuilder
 import com.android.compose.animation.scene.UserActionDistance
 import com.android.compose.animation.scene.transformation.offsetSharedElementWithAnchor
-import com.android.systemui.media.remedia.ui.compose.Media.Elements.MediaCarousel
 import com.android.systemui.notifications.ui.composable.Notifications
 import com.android.systemui.qs.shared.ui.QuickSettings.Elements
-import com.android.systemui.qs.shared.ui.QuickSettings.Elements.ExpandedQuickSettingsMedia
-import com.android.systemui.qs.shared.ui.QuickSettings.Elements.QuickQuickSettingsCompactMedia
 import com.android.systemui.qs.shared.ui.QuickSettings.SHARED_TILE_PICKER_THRESHOLD
 import com.android.systemui.scene.shared.model.Scenes
 import com.android.systemui.shade.ui.composable.ShadeHeader
@@ -50,16 +47,9 @@ fun TransitionBuilder.shadeToQuickSettingsTransition(
     // overlap.
     fractionRange(end = 0.5f) { fade(QqsTileElementMatcher) }
     anchoredTranslate(QqsTileElementMatcher, Elements.GridAnchor)
-    // The media card moves with the tiles (same anchor), cross-fading in sync with the pull: the
-    // QQS card fades out over the first half and the expanded QS card fades in over the second half.
-    // (The expanded QS media is a sibling of QuickSettingsContent, so it is not gated by that
-    // element's late fade.) Previously the media only faded and stayed pinned in place.
-    anchoredTranslate(ExpandedQuickSettingsMedia, Elements.GridAnchor)
-    anchoredTranslate(MediaCarousel, Elements.GridAnchor)
-    anchoredTranslate(QuickQuickSettingsCompactMedia, Elements.GridAnchor)
-    fractionRange(start = 0f, end = 0.5f) { fade(MediaCarousel) }
-    fractionRange(start = 0f, end = 0.5f) { fade(QuickQuickSettingsCompactMedia) }
-    fractionRange(start = 0.5f, end = 1f) { fade(ExpandedQuickSettingsMedia) }
+    // The media card slides from its QQS position to its expanded QS position with the pull, like
+    // the tiles, via a shared element (same key in both scenes).
+    sharedElement(Elements.QuickSettingsMedia)
 
     val translationY = ShadeHeader.Dimensions.CollapsedHeightForTransitions
     translate(ShadeHeader.Elements.CollapsedContentStart, y = translationY)

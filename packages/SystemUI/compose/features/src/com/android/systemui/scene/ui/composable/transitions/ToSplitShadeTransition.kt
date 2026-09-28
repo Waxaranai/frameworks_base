@@ -35,9 +35,7 @@ fun TransitionBuilder.toSplitShadeTransition(durationScale: Double = 1.0) {
     fractionRange(end = .33f) { fade(Shade.Elements.BackgroundScrim) }
 
     fractionRange(start = .33f) {
-        fade(QuickSettings.Elements.ExpandedQuickSettingsMedia)
-        // Edith compact QQS media (dedicated key); no-op when the compact mode is off.
-        fade(QuickSettings.Elements.QuickQuickSettingsCompactMedia)
+        fade(QuickSettings.Elements.QuickSettingsMedia)
         fade(ShadeHeader.Elements.Clock)
         fade(ShadeHeader.Elements.CollapsedContentStart)
         fade(ShadeHeader.Elements.CollapsedContentEnd)
