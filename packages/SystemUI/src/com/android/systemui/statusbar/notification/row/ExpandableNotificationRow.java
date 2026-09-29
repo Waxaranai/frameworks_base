@@ -1685,11 +1685,21 @@ public class ExpandableNotificationRow extends ActivatableNotificationView
 
     @Override
     protected void setBackgroundTintColor(int color) {
-        if (notificationRowTransparency()) {
-            boolean isColorized = false;
-            if (mEntryAdapter != null) {
-                isColorized = mEntryAdapter.isColorized();
+        // Colorized notifications (e.g. screen recording, foreground services) are drawn with the
+        // notification's own color as the background and light content on top (chosen by the
+        // platform when building the RemoteViews). If the colorized tint is missing and we fall back
+        // to the normal/opaque surface color, the light content would sit on a light background
+        // (white on white in light theme). Use the notification's color instead in that case.
+        final boolean isColorized = mEntryAdapter != null && mEntryAdapter.isColorized();
+        if (isColorized
+                && (mBgTint == NO_COLOR || mBgTint == mNormalColor || mBgTint == mOpaqueColor)) {
+            int notificationColor = mEntryAdapter.getSbn().getNotification().color;
+            if (notificationColor != Notification.COLOR_DEFAULT) {
+                color = notificationColor;
+                mBgTint = notificationColor;
             }
+        }
+        if (notificationRowTransparency()) {
             boolean isTransparent = usesTransparentBackground();
             if (isColorized) {
                 // For colorized notifications, use a color that matches the tint color at 90% alpha
