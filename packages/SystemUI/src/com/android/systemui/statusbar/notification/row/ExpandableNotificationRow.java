@@ -1661,13 +1661,11 @@ public class ExpandableNotificationRow extends ActivatableNotificationView
     }
 
     public void onUiModeChanged() {
-        if (isBundle()) {
-            // If this is a bundle, then `onNotificationUpdated` will not be called as there is no
-            // backing notification entry for bundles. So update the background immediately.
-            updateBackgroundColorsOfSelf();
-        } else {
-            mUpdateSelfBackgroundOnUpdate = true;
-        }
+        // Re-resolve the background colors immediately. Previously this was deferred to the next
+        // onNotificationUpdated() (via mUpdateSelfBackgroundOnUpdate), but a bare theme change does
+        // not always produce a notification update, so rows kept the previous theme's colors until
+        // something else forced a rebind. Updating here makes a theme toggle apply at once.
+        updateBackgroundColorsOfSelf();
         reInflateViews();
         if (mChildrenContainer != null) {
             for (ExpandableNotificationRow child : mChildrenContainer.getAttachedChildren()) {
